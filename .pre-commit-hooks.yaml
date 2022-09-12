@@ -1,0 +1,8 @@
+- id: vx-check-deactivate
+  name: Check deactivate.jinja syntax
+  description: Check if the file deactivate.jinja is correctly formatted
+  entry: vx-check-deactivate
+  args: []
+  language: python
+  types: [file]
+  files: deactivate.jinja
