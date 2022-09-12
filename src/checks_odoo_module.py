@@ -16,7 +16,6 @@ class ChecksOdooModule(object):
         self.manifest_path = os.path.relpath(manifest_path)
         self.odoo_addon_path = os.path.dirname(self.manifest_path)
         self._get_manifest_content()
-        self.readme_path = None
 
     def _get_manifest_content(self):
         if not os.path.isfile(os.path.join(self.odoo_addon_path, "__init__.py")):
@@ -29,7 +28,7 @@ class ChecksOdooModule(object):
 
     def check(self, name):
         check_method = getattr(self, "check_%s" % name, None)
-        if not callable(check_method) or check_method.startswith("_"):
+        if not callable(check_method) or name.startswith("_"):
             print("Check %s is not callable or is calling private method" % name)
             return
         if not self._is_module_installable():
@@ -40,7 +39,6 @@ class ChecksOdooModule(object):
         for readme_name in DFTL_README_FILES:
             readme_path = os.path.join(self.odoo_addon_path, readme_name)
             if os.path.isfile(readme_path):
-                self.readme_path = readme_path()
                 return True
         print("Missing %s file. Template here: %s" % (DFTL_README_FILES[0], DFTL_README_TMPL_URL))
         return False

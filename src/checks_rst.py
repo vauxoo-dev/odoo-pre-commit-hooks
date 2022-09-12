@@ -1,5 +1,6 @@
 from restructuredtext_lint import lint_file as rst_lint
 import re
+import sys
 
 
 class ChecksRST(object):
@@ -24,7 +25,7 @@ class ChecksRST(object):
                 # Skip directive errors
                 continue
             msg_strip = msg.strip('\n').replace('\n', '|')
-            print("%s:%d - %s" % (rst_file, error.line or 0, msg_strip))
+            print("%s:%d - %s" % (self.rst_path, error.line or 0, msg_strip))
         if errors:
             return False
         return True

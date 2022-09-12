@@ -49,33 +49,21 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
-        # 'Programming Language :: Python :: Implementation :: CPython',
-        # 'Programming Language :: Python :: Implementation :: PyPy',
-        # uncomment if you test on these interpreters:
-        # 'Programming Language :: Python :: Implementation :: IronPython',
-        # 'Programming Language :: Python :: Implementation :: Jython',
-        # 'Programming Language :: Python :: Implementation :: Stackless',
         "Topic :: Utilities",
     ],
     project_urls={
-        # "Documentation": "https://odoo-pre-commit-hooks.readthedocs.io/",
-        # "Changelog": "https://odoo-pre-commit-hooks.readthedocs.io/en/latest/changelog.html",
         "Issue Tracker": "https://github.com/OCA/odoo-pre-commit-hooks/issues",
     },
     keywords=[
-        # eg: 'keyword1', 'keyword2', 'keyword3',
+        "pre-commit", "oca", "Odoo Community Association",
     ],
     python_requires=">=3.5",
     install_requires=generate_dependencies(),
-    extras_require={
-        # eg:
-        #   'rst': ['docutils>=0.11'],
-        #   ':python_version=="2.6"': ['argparse'],
-    },
+    extras_require={},
     entry_points={
         "console_scripts": [
             "odoo-missing-readme = checks_odoo_module:main_missing_readme",
-            "odoo-rst-syntax = checks_rst.main_rst_syntax_error",
+            "odoo-rst-syntax = checks_rst:main_rst_syntax_error",
         ]
     },
 )
