@@ -1,22 +1,15 @@
-- id: oca-check-readme
-  name: Check odoo module Readme
-  description: Check if the Odoo module has readme
-  entry: oca-check-readme
-  args: []
-  language: python
-  types: [file]
-  files: ^__manifest__.py$
-
 - id: odoo-missing-readme
   name: Odoo module check readme file exists
   entry: odoo-missing-readme
+  args: []
   name: odoo-missing-readme
   language: python
   types: [file]
   language: python
-  files: __manifest__.py
+  files: \_\_manifest\_\_.py$
 - id: odoo-rst-syntax
   entry: odoo-rst-syntax
+  args: []
   name: RST Syntax
   language: python
   types: [file]
