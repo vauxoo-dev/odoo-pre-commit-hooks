@@ -7,6 +7,7 @@
   types: [file]
   language: python
   files: \_\_manifest\_\_.py$
+  verbose: True
 - id: odoo-rst-syntax
   entry: odoo-rst-syntax
   args: []
@@ -15,3 +16,4 @@
   types: [file]
   language: python
   files: \.rst$
+  verbose: True
