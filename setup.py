@@ -74,7 +74,8 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "oca-check-readme = check_readme:main",
+            "odoo-missing-readme = checks_odoo_module:main_missing_readme",
+            "odoo-rst-syntax = checks_rst.main_rst_syntax_error",
         ]
     },
 )

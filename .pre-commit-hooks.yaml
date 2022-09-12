@@ -4,4 +4,5 @@
   entry: oca-check-readme
   args: []
   language: python
-  types: [directory]
+  types: [file]
+  files: __manifest__.py
