@@ -3,18 +3,20 @@
 # Hooks are using print directly
 # pylint: disable=print-used
 
-import json
-import re
+import os
 import sys
 
-from jinja2 import Template
+DFTL_README_TMPL_URL = 'https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst'  # no-qa
+DFTL_README_FILES = ['README.rst', 'README.md', 'README.txt']
 
 
 def check_readme(manifest_path):
-    readme_path = os.path.join(os.path.dirname(manifest_path), "README.rst")
-    if not os.path.isfile(readme_path):
-        return False
-    return True
+    for readme_name in DFTL_README_FILES:
+        readme_path = os.path.join(os.path.dirname(manifest_path), readme_name)
+        if os.path.isfile(readme_path):
+            return True
+    print("Missing %s file. Template here: %s" % (DFTL_README_FILES[0], DFTL_README_TMPL_URL))
+    return False
 
 
 def main():
