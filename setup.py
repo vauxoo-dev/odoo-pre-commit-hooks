@@ -55,7 +55,9 @@ setup(
         "Issue Tracker": "https://github.com/OCA/odoo-pre-commit-hooks/issues",
     },
     keywords=[
-        "pre-commit", "oca", "Odoo Community Association",
+        "pre-commit",
+        "oca",
+        "Odoo Community Association",
     ],
     python_requires=">=3.5",
     install_requires=generate_dependencies(),

@@ -1,9 +1,13 @@
-from restructuredtext_lint import lint_file as rst_lint
+# Hooks are using print directly
+# pylint: disable=print-used
+
 import re
 import sys
 
+from restructuredtext_lint import lint_file as rst_lint
 
-class ChecksRST(object):
+
+class ChecksRST:
     def __init__(self, rst_path):
         self.rst_path = rst_path
 
@@ -11,20 +15,22 @@ class ChecksRST(object):
         """Check if rst file there is syntax error
         :return: (False, msg) if exists errors or (True, "") if not
         """
-        errors = rst_lint(self.rst_path, encoding='UTF-8')
+        errors = rst_lint(self.rst_path, encoding="UTF-8")
         for error in errors:
             msg = error.full_message
             res = re.search(
                 r'No directive entry for "([\w|\-]+)"|'
                 r'Unknown directive type "([\w|\-]+)"|'
                 r'No role entry for "([\w|\-]+)"|'
-                r'Unknown interpreted text role "([\w|\-]+)"', msg)
+                r'Unknown interpreted text role "([\w|\-]+)"',
+                msg,
+            )
             # TODO: Add support for sphinx directives after fix
             # https://github.com/twolfson/restructuredtext-lint/issues/29
             if res:
                 # Skip directive errors
                 continue
-            msg_strip = msg.strip('\n').replace('\n', '|')
+            msg_strip = msg.strip("\n").replace("\n", "|")
             print("%s:%d - %s" % (self.rst_path, error.line or 0, msg_strip))
         if errors:
             return False

@@ -7,11 +7,11 @@ import ast
 import os
 import sys
 
-DFTL_README_TMPL_URL = 'https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst'  # no-qa
-DFTL_README_FILES = ['README.rst', 'README.md', 'README.txt']
+DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # no-qa
+DFTL_README_FILES = ["README.rst", "README.md", "README.txt"]
 
 
-class ChecksOdooModule(object):
+class ChecksOdooModule:
     def __init__(self, manifest_path):
         self.manifest_path = os.path.relpath(manifest_path)
         self.odoo_addon_path = os.path.dirname(self.manifest_path)
@@ -22,9 +22,9 @@ class ChecksOdooModule(object):
             return
         with open(self.manifest_path) as f_manifest:
             self.manifest_content = ast.literal_eval(f_manifest.read())
-    
+
     def _is_module_installable(self):
-        return self.manifest_content and self.manifest_content.get('installable', True)
+        return self.manifest_content and self.manifest_content.get("installable", True)
 
     def check(self, name):
         check_method = getattr(self, "check_%s" % name, None)
