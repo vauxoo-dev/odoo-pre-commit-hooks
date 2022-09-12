@@ -5,4 +5,20 @@
   args: []
   language: python
   types: [file]
+  files: ^__manifest__.py$
+
+- id: odoo-missing-readme
+  name: Odoo module check readme file exists
+  entry: odoo-missing-readme
+  name: odoo-missing-readme
+  language: python
+  types: [file]
+  language: python
   files: __manifest__.py
+- id: odoo-rst-syntax
+  entry: odoo-rst-syntax
+  name: RST Syntax
+  language: python
+  types: [file]
+  language: python
+  files: \.rst$
