@@ -19,16 +19,16 @@ def read(*names, **kwargs):
 
 
 setup(
-    name="pre-commit-vauxoo-hooks",
+    name="odoo-pre-commit-hooks",
     version="0.0.1",
     license="LGPL-3.0-or-later",
-    description="pre-commit-vauxoo-hooks to use in pre-commit-config.yml files",
+    description="odoo-pre-commit-hooks to use in pre-commit-config.yml files",
     long_description="{}".format(
         re.compile("^.. start-badges.*^.. end-badges", re.M | re.S).sub("", read("README.rst")),
     ),
-    author="Vauxoo",
-    author_email="info@vauxoo.com",
-    url="https://github.com/Vauxoo/pre-commit-vauxoo-hooks",
+    author="Odoo Community Association (OCA)",
+    author_email="support@odoo-community.org",
+    url="https://github.com/OCA/odoo-pre-commit-hooks",
     packages=find_packages("src"),
     package_dir={"": "src"},
     py_modules=[splitext(basename(path))[0] for path in glob("src/*.py")],
@@ -58,9 +58,9 @@ setup(
         "Topic :: Utilities",
     ],
     project_urls={
-        # "Documentation": "https://pre-commit-vauxoo-hooks.readthedocs.io/",
-        # "Changelog": "https://pre-commit-vauxoo-hooks.readthedocs.io/en/latest/changelog.html",
-        "Issue Tracker": "https://github.com/Vauxoo/pre-commit-vauxoo-hooks/issues",
+        # "Documentation": "https://odoo-pre-commit-hooks.readthedocs.io/",
+        # "Changelog": "https://odoo-pre-commit-hooks.readthedocs.io/en/latest/changelog.html",
+        "Issue Tracker": "https://github.com/OCA/odoo-pre-commit-hooks/issues",
     },
     keywords=[
         # eg: 'keyword1', 'keyword2', 'keyword3',
@@ -74,7 +74,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "vx-check-deactivate = check_deactivate_jinja:main",
+            "oca-check-readme = check_readme:main",
         ]
     },
 )

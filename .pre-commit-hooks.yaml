@@ -1,8 +1,7 @@
-- id: vx-check-deactivate
-  name: Check deactivate.jinja syntax
-  description: Check if the file deactivate.jinja is correctly formatted
-  entry: vx-check-deactivate
+- id: oca-check-readme
+  name: Check odoo module Readme
+  description: Check if the Odoo module has readme
+  entry: oca-check-readme
   args: []
   language: python
-  types: [file]
-  files: deactivate.jinja
+  types: [directory]
