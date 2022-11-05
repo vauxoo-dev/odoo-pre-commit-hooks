@@ -3,10 +3,13 @@ import os
 from collections import defaultdict
 
 from oca_pre_commit_hooks import utils
+from oca_pre_commit_hooks.base_checker import BaseChecker
 
 
-class ChecksOdooModuleCSV:
-    def __init__(self, manifest_datas, module_name, enable, disable):
+class ChecksOdooModuleCSV(BaseChecker):
+    def __init__(self, manifest_datas, module_name, enable=None, disable=None):
+        super().__init__(enable, disable)
+
         self.manifest_datas = manifest_datas
         self.module_name = module_name
         self.enable = enable
@@ -17,7 +20,6 @@ class ChecksOdooModuleCSV:
                     "model": os.path.splitext(os.path.basename(manifest_data["filename"]))[0],
                 }
             )
-        self.checks_errors = defaultdict(list)
 
     @utils.only_required_for_checks("csv-syntax-error", "csv-duplicate-record-id")
     def check_csv(self):

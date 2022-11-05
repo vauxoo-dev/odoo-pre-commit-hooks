@@ -6,6 +6,7 @@ import sys
 from collections import defaultdict
 
 from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_xml, utils
+from oca_pre_commit_hooks.base_checker import BaseChecker
 
 DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # noqa: B950
 DFTL_README_FILES = ["README.md", "README.txt", "README.rst"]
@@ -13,16 +14,16 @@ DFTL_MANIFEST_DATA_KEYS = ["data", "demo", "demo_xml", "init_xml", "qweb", "test
 MANIFEST_NAMES = ("__openerp__.py", "__manifest__.py")
 
 
-class ChecksOdooModule:
-    def __init__(self, manifest_path, enable, disable, changed=None, verbose=True):
+class ChecksOdooModule(BaseChecker):
+    def __init__(self, manifest_path, enable=None, disable=None, changed=None, verbose=True):
+        super().__init__(enable, disable)
+
         if not os.path.isfile(manifest_path) or os.path.basename(manifest_path) not in MANIFEST_NAMES:
             raise UserWarning(  # pragma: no cover
                 f"Not valid manifest file name {manifest_path} file expected {MANIFEST_NAMES}"
             )
         self.manifest_path = manifest_path
         self.changed = changed if changed is not None else []
-        self.enable = enable
-        self.disable = disable
         self.verbose = verbose
         self.odoo_addon_path = os.path.dirname(self.manifest_path)
         self.manifest_top_path = utils.top_path(self.odoo_addon_path)
@@ -31,7 +32,6 @@ class ChecksOdooModule:
         self.manifest_dict = self._manifest2dict()
         self.is_module_installable = self._is_installable()
         self.manifest_referenced_files = self._referenced_files_by_extension()
-        self.checks_errors = defaultdict(list)
 
     def _manifest2dict(self):
         if not os.path.isfile(os.path.join(self.odoo_addon_path, "__init__.py")):

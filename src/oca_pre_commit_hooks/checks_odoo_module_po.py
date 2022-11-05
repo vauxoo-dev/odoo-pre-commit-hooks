@@ -7,6 +7,7 @@ from collections import defaultdict
 import polib
 
 from oca_pre_commit_hooks import utils
+from oca_pre_commit_hooks.base_checker import BaseChecker
 
 # Regex used from https://github.com/translate/translate/blob/9de0d72437/translate/filters/checks.py#L50-L62  # noqa
 PRINTF_PATTERN = re.compile(
@@ -39,11 +40,10 @@ class FormatStringParseError(StringParseError):
     pass
 
 
-class ChecksOdooModulePO:
-    def __init__(self, po_filename, enable, disable):
-        self.enable = enable
-        self.disable = disable
-        self.checks_errors = defaultdict(list)
+class ChecksOdooModulePO(BaseChecker):
+    def __init__(self, po_filename, enable=None, disable=None):
+        super().__init__(enable, disable)
+
         po_filename = utils.full_norm_path(po_filename)
         top_path = utils.top_path(os.path.dirname(po_filename))
         self.po_data = {

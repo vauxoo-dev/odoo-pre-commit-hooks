@@ -5,18 +5,18 @@ from collections import defaultdict
 from lxml import etree
 
 from oca_pre_commit_hooks import utils
+from oca_pre_commit_hooks.base_checker import BaseChecker
 
 DFTL_MIN_PRIORITY = 99
 DFLT_DEPRECATED_TREE_ATTRS = ["colors", "fonts", "string"]
 
 
-class ChecksOdooModuleXML:
-    def __init__(self, manifest_datas, module_name, enable, disable):
+class ChecksOdooModuleXML(BaseChecker):
+    def __init__(self, manifest_datas, module_name, enable=None, disable=None):
+        super().__init__(enable, disable)
+
         self.module_name = module_name
-        self.enable = enable
-        self.disable = disable
         self.manifest_datas = manifest_datas
-        self.checks_errors = defaultdict(list)
         for manifest_data in self.manifest_datas:
             try:
                 with open(manifest_data["filename"], "rb") as f_xml:
