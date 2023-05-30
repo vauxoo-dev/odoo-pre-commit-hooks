@@ -86,6 +86,4 @@ class GlobalParser(argparse.ArgumentParser):
 
             res.config.close()
 
-        # Not expected/used by any other program component as of now.
-        delattr(res, "config")
         return res

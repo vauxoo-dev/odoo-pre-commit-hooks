@@ -3,14 +3,15 @@ import os
 from collections import defaultdict
 
 from oca_pre_commit_hooks import utils
+from oca_pre_commit_hooks.base_checker import BaseChecker
 
 
-class ChecksOdooModuleCSV:
-    def __init__(self, manifest_datas, module_name, enable, disable):
+class ChecksOdooModuleCSV(BaseChecker):
+    def __init__(self, manifest_datas, module_name, enable, disable, config=None):
+        super().__init__(enable, disable, config)
+
         self.manifest_datas = manifest_datas
         self.module_name = module_name
-        self.enable = enable
-        self.disable = disable
         for manifest_data in manifest_datas:
             manifest_data.update(
                 {
