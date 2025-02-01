@@ -21,7 +21,7 @@ pattern = re.compile(
 # Función para limpiar atributos
 def parse_attributes(attr_string):
     if not attr_string:
-        return "Ninguno"
+        return {}
     attr_pattern = re.findall(r"(\w+)\s*=\s*['\"](.*?)['\"]", attr_string)
     return {key: value for key, value in attr_pattern}
 
@@ -62,6 +62,9 @@ for num_tag, (match, node) in enumerate(zip(pattern.finditer(xml_content), tree_
 
     if not start_line <= node.sourceline <= end_line:
         raise UserWarning(f"The tags found from regex have not the same sourceline range than lxml tree lxml sourceline {node.sourceline} vs regex tag {start_line} and {end_line}")
+    
+    if set(node.attrib) != set(attrs):
+        raise UserWarning(f"The attributes found from regex have not the same than lxml tree lxml {node.attrib.keys()} vs {attrs}")
 
 
 
