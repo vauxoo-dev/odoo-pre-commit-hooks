@@ -28,7 +28,7 @@ tree_node = etree.parse(xml_file, parser=parser)
 # Expresión regular mejorada para capturar etiquetas y su contenido
 pattern = re.compile(
     r"<(?P<tag>\w+)"  # Nombre del tag
-    r"(?P<attrs>(?:\s+\w+\s*=\s*(?:\".*?\"|'.*?'))*\s*)"  # Atributos que pueden ser multilínea
+    r"(?P<attrs>(?:\s+[\w\-]+\s*=\s*(?:\".*?\"|'.*?'))*\s*)"  # Atributos que pueden ser multilínea
     r"(?P<selfclose>/?)>"  # Cierre de etiqueta (self-closing o no)
     r"(?P<content>.*?)"  # Contenido interno (si existe)
     r"(?:</(?P=tag)>)?",  # Cierre de etiqueta (si no es self-closing)
@@ -40,7 +40,7 @@ pattern = re.compile(
 def parse_attributes(attr_string):
     if not attr_string:
         return {}
-    attr_pattern = re.findall(r"(\w+)\s*=\s*(['\"])(.*?)(?<!\\)\2", attr_string, re.DOTALL)
+    attr_pattern = re.findall(r"([\w\-]+)\s*=\s*(['\"])(.*?)(?<!\\)\2", attr_string, re.DOTALL)
     return {key: value for key, _, value in attr_pattern}
 
 
