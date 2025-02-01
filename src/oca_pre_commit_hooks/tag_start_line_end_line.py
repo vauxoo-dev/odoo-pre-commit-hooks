@@ -1,14 +1,18 @@
+import sys
 from lxml import etree
 import re
 
 
 # Cargar el archivo XML
-xml_file = "/Users/moylop260/odoo/sbd/sinpe/views/payment_transaction_views.xml"
+# xml_file = "/Users/moylop260/odoo/sbd/sinpe/views/payment_transaction_views.xml"
+xml_file = sys.argv[1]
+print(f"XML File {xml_file}")
 
 with open(xml_file, "r", encoding="utf-8") as xml_obj:
     xml_content = xml_obj.read()
 
-tree_node = etree.parse(xml_file)
+parser = etree.XMLParser(remove_comments=True)
+tree_node = etree.parse(xml_file, parser=parser)
 
 # Expresión regular mejorada para capturar etiquetas y su contenido
 pattern = re.compile(
@@ -56,8 +60,8 @@ for num_tag, (match, node) in enumerate(zip(pattern.finditer(xml_content), tree_
     print(f"Tag: <{tag}>")
     print(f"  Atributos: {attrs}")
     print(f"  Tipo: {'Self-closing' if self_closing else 'Normal'}")
-    print(f"  Contenido: {content[:50]}..." if content else "  Sin contenido")
-    print(f"node {node} sourceline {node.sourceline}")
+    # print(f"  Contenido: {content[:50]}..." if content else "  Sin contenido")
+    print(f"  sourceline {node.sourceline}")
     print("-" * 40)
 
     if not start_line <= node.sourceline <= end_line:
