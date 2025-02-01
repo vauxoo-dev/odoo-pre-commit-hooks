@@ -1,190 +1,71 @@
-# # import re
-
-# # def analyze_xml_tags(file_path):
-# #     tag_ranges = []
-
-# #     # Expresiones regulares para tags
-# #     opening_tag_pattern = re.compile(r"<(\w+)(\s[^>]*)?>")       # Apertura de tag <tag ...>
-# #     closing_tag_pattern = re.compile(r"</(\w+)>")                # Cierre de tag </tag>
-# #     self_closing_tag_pattern = re.compile(r"<(\w+)(\s[^>]*)?/>") # Tag self-closing <tag ... />
-
-# #     # Pila para rastrear aperturas de tags normales
-# #     open_tags = []
-
-# #     with open(file_path, "r", encoding="utf-8") as file:
-# #         lines = file.readlines()
-
-# #     # Analizar línea por línea
-# #     for line_num, line in enumerate(lines, start=1):
-# #         stripped_line = line.strip()
-
-# #         # Detectar tags self-closing
-# #         self_closing_match = self_closing_tag_pattern.match(stripped_line)
-# #         if self_closing_match:
-# #             tag_name = self_closing_match.group(1)
-# #             tag_ranges.append({
-# #                 "tag": tag_name,
-# #                 "type": "self-closing",
-# #                 "start_line": line_num,
-# #                 "end_line": line_num,
-# #             })
-# #             continue
-
-# #         # Detectar apertura de tags normales
-# #         opening_match = opening_tag_pattern.match(stripped_line)
-# #         if opening_match and not stripped_line.endswith("/>"):
-# #             tag_name = opening_match.group(1)
-# #             open_tags.append({
-# #                 "tag": tag_name,
-# #                 "start_line": line_num,
-# #             })
-# #             continue
-
-# #         # Detectar cierre de tags normales
-# #         closing_match = closing_tag_pattern.match(stripped_line)
-# #         if closing_match:
-# #             tag_name = closing_match.group(1)
-# #             # Buscar el tag correspondiente en la pila
-# #             for i in range(len(open_tags) - 1, -1, -1):
-# #                 if open_tags[i]["tag"] == tag_name:
-# #                     tag_ranges.append({
-# #                         "tag": tag_name,
-# #                         "type": "normal",
-# #                         "start_line": open_tags[i]["start_line"],
-# #                         "end_line": line_num,
-# #                     })
-# #                     open_tags.pop(i)
-# #                     break
-
-# #     # Revisar posibles tags self-closing multi-línea
-# #     multi_line_tag = None
-# #     for line_num, line in enumerate(lines, start=1):
-# #         stripped_line = line.strip()
-
-# #         if multi_line_tag:
-# #             if stripped_line.endswith("/>"):
-# #                 multi_line_tag["end_line"] = line_num
-# #                 tag_ranges.append(multi_line_tag)
-# #                 multi_line_tag = None
-# #             continue
-
-# #         # Detectar inicio de tags self-closing multi-línea
-# #         if re.match(r"<(\w+)(\s[^>]*)?$", stripped_line) and not stripped_line.endswith("/>"):
-# #             tag_name = re.match(r"<(\w+)", stripped_line).group(1)
-# #             multi_line_tag = {
-# #                 "tag": tag_name,
-# #                 "type": "self-closing",
-# #                 "start_line": line_num,
-# #             }
-
-# #     return tag_ranges
+from lxml import etree
+import re
 
 
-# # # Ejemplo de uso
-# # if __name__ == "__main__":
-# #     xml_file = "/Users/moylop260/odoo/sbd/sinpe/views/payment_transaction_views.xml"  # Cambia por la ruta de tu archivo XML
-# #     tag_data = analyze_xml_tags(xml_file)
-    
-# #     for tag_info in tag_data:
-# #         print(f"Tag: <{tag_info['tag']}>")
-# #         print(f"  Tipo: {tag_info['type']}")
-# #         print(f"  Línea de inicio: {tag_info['start_line']}")
-# #         print(f"  Línea de fin: {tag_info['end_line']}\n")
-
-# import re
-# import regex
-
-
-
-# xml_regex = regex.compile(r"""
-# \s*
-# (?:
-#   (?P<opentag>
-#     <\s*
-#     (?P<tagname>\w+)
-#     (?P<attribute>
-#       \s+
-#       (?P<attrname>[^\s>]+)
-#       =
-#       (?P<attrquote>"|')
-#       (?P<attrvalue>[^\s"'>]+)
-#       (?P=attrquote)
-#     )*
-#     \s*
-#     (?P<selfclosing>/\s*)?
-#     >
-#   )
-#   (?:
-#     (?(selfclosing)|
-#       (?P<children>(?R))
-#       (?P<closetag><\s*/\s*(?P=tagname)\s*>)
-#     )
-#   )
-# |
-#   (?P<text>[^<]*)
-# )*
-# \s*
-# """, flags=re.DOTALL)
-
-# xml_file = "/Users/moylop260/odoo/sbd/sinpe/views/payment_transaction_views.xml"
-# with open(xml_file) as xml_obj:
-#     xml_content = xml_obj.read()
-# import ipdb;ipdb.set_trace()
-# xml_regex.search(xml_content)
-
-
-import regex as re
-
-xml_regex = re.compile(r"""
-\s*
-(?:
-  (?P<opentag>
-    <\s*
-    (?P<tagname>\w+)                # Nombre del tag
-    (?P<attributes>                  # Captura los atributos correctamente
-      (?:\s+ 
-        (?P<attrname>[\w:-]+)        # Nombre del atributo
-        \s*=\s*
-        (?P<attrquote>"|')           # Comillas del atributo
-        (?P<attrvalue>.*?)           # Valor del atributo (puede estar vacío)
-        (?P=attrquote)               # Cierre con la misma comilla
-      )*
-    )?
-    \s*
-    (?P<selfclosing>/\s*)?           # Puede ser self-closing
-    >
-  )
-  (?:
-    (?(selfclosing)|
-      (?P<children>.*?)              # Captura el contenido dentro de la etiqueta
-      (?P<closetag>
-        <\s*/\s*(?P=tagname)\s*>     # Cierre de la misma etiqueta
-      )
-    )
-  )
-|
-  (?P<text>[^<]+)                    # Captura texto dentro de las etiquetas
-)*
-\s*
-""", flags=re.DOTALL | re.VERBOSE)
-
-# Leer archivo XML
+# Cargar el archivo XML
 xml_file = "/Users/moylop260/odoo/sbd/sinpe/views/payment_transaction_views.xml"
+
 with open(xml_file, "r", encoding="utf-8") as xml_obj:
     xml_content = xml_obj.read()
 
-# Buscar coincidencias
-matches = xml_regex.finditer(xml_content)
+tree_node = etree.parse(xml_file)
 
-# Imprimir resultados
-for match in matches:
-    tag_name = match.group("tagname")
-    attributes = match.group("attributes")
-    is_self_closing = bool(match.group("selfclosing"))
-    content = match.group("children") if match.group("children") else ""
+# Expresión regular mejorada para capturar etiquetas y su contenido
+pattern = re.compile(
+    r"<(?P<tag>\w+)(?P<attrs>(?:\s+\w+\s*=\s*(?:\"[^\"]*\"|'[^']*'))*\s*)(?P<selfclose>/?)>"
+    r"(?P<content>.*?)"
+    r"(?:</(?P=tag)>)?",
+    re.DOTALL
+)
 
-    print(f"Tag: <{tag_name}>")
-    print(f"  Atributos: {attributes.strip() if attributes else 'Ninguno'}")
-    print(f"  Tipo: {'Self-closing' if is_self_closing else 'Normal'}")
-    print(f"  Contenido: {content.strip()[:50]}..." if content else "  Sin contenido")
+# Función para limpiar atributos
+def parse_attributes(attr_string):
+    if not attr_string:
+        return "Ninguno"
+    attr_pattern = re.findall(r"(\w+)\s*=\s*['\"](.*?)['\"]", attr_string)
+    return {key: value for key, value in attr_pattern}
+
+# Buscar coincidencias y mostrar resultados
+for num_tag, (match, node) in enumerate(zip(pattern.finditer(xml_content), tree_node.iter()), start=1):
+    tag = match.group("tag")
+    if node.tag != tag:
+        raise UserWarning(f"The tags found from regex are not the same than lxml tree lxml tag {node.tag} vs regex tag {tag}")
+
+    attrs = parse_attributes(match.group("attrs"))
+    self_closing = match.group("selfclose") == "/"
+    content = match.group("content").strip()
+
+    # Calcular número de línea de inicio
+    start_line = xml_content[:match.start()].count("\n") + 1
+
+    # Calcular número de línea de fin correctamente para self-closing y normales
+    if self_closing:
+        # Considerar que la etiqueta puede ocupar varias líneas
+        end_line = start_line + match.group(0).count("\n")
+    else:
+        # Buscar el tag de cierre
+        closing_tag_pattern = re.compile(rf"</{tag}>")
+        closing_match = closing_tag_pattern.search(xml_content, match.end())
+        if closing_match:
+            end_line = xml_content[:closing_match.end()].count("\n") + 1
+        else:
+            end_line = start_line  # En caso de no encontrar cierre
+
+    print(f"Línea de inicio: {start_line}")
+    print(f"Línea de fin: {end_line}")
+    print(f"Tag: <{tag}>")
+    print(f"  Atributos: {attrs}")
+    print(f"  Tipo: {'Self-closing' if self_closing else 'Normal'}")
+    print(f"  Contenido: {content[:50]}..." if content else "  Sin contenido")
+    print(f"node {node} sourceline {node.sourceline}")
     print("-" * 40)
+
+    if not start_line <= node.sourceline <= end_line:
+        raise UserWarning(f"The tags found from regex have not the same sourceline range than lxml tree lxml sourceline {node.sourceline} vs regex tag {start_line} and {end_line}")
+
+
+
+print(num_tag)
+tree_node = etree.parse(xml_file)
+nodes = [i for i in tree_node.iter()]
+print(len(nodes))
