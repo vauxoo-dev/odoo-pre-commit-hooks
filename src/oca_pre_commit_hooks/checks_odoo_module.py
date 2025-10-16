@@ -8,8 +8,7 @@ from pathlib import Path
 
 from colorama import init as colorama_init
 
-from fixit.api import fixit_paths
-
+from fixit.cli import main as fixit_main
 
 from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_xml, utils
 from oca_pre_commit_hooks.base_checker import BaseChecker
@@ -231,14 +230,8 @@ class ChecksOdooModule(BaseChecker):
     @utils.only_required_for_installable()
     def check_py(self):
         """Run fixit"""
-        import pdb;pdb.set_trace()
-        fixit_paths(
-            [self.odoo_addon_path],
-            autofix=self.autofix,
-            # options=options,
-            # parallel=False,
-            # metrics_hook=print if options.print_metrics else None,
-        )
+        cfg=os.path.join(os.path.dirname(os.path.abspath(__file__)), "checks_odoo_module_fixit", "pyproject.toml")
+        fixit_main([f"--config-file={cfg}", "fix", self.odoo_addon_path, "--automatic"])
 
 
 def lookup_manifest_paths(filenames_or_modules):
