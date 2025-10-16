@@ -5,7 +5,7 @@ import libcst as cst
 from fixit import InvalidTestCase, LintRule, ValidTestCase
 from libcst.metadata import QualifiedName, QualifiedNameProvider
 
-ODOO_VERSION = os.getenv("VERSION")
+ODOO_VERSION = os.getenv("FIXIT_ODOO_VERSION")
 
 
 def version_parse(version_str):
@@ -102,7 +102,7 @@ class PreferEnvTranslationRule(LintRule):
         if not odoo_version_tuple:
             # TODO: R&D if there is a warning logger in the library
             warnings.warn(
-                f"Invalid manifest versions format {ODOO_VERSION}. "
+                f"Invalid manifest versions format {{ODOO_VERSION}}. "
                 "It was not possible to run prefer_env_translation_rule",
                 UserWarning,
                 stacklevel=2,

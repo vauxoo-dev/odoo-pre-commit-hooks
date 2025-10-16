@@ -230,9 +230,14 @@ class ChecksOdooModule(BaseChecker):
     @utils.only_required_for_installable()
     def check_py(self):
         """Run fixit"""
-        cfg=os.path.join(os.path.dirname(os.path.abspath(__file__)), "checks_odoo_module_fixit", "pyproject.toml")
-        import pdb;pdb.set_trace()
-        fixit_main([f"--config-file={cfg}", "fix", "--automatic", self.odoo_addon_path])
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # Enable rule path
+        # TODO: R&D to use cfg file. I tried but it was not working well
+        # cfg=os.path.join(os.path.dirname(os.path.abspath(__file__)), "checks_odoo_module_fixit", "pyproject.toml")
+        # cmd = [f"--config-file={cfg}"
+        # import pdb;pdb.set_trace()
+        os.environ["FIXIT_ODOO_VERSION"] = self.module_version or os.getenv("VERSION") or ""
+        cmd = ["--rules=checks_odoo_module_fixit", "fix", "--automatic", self.odoo_addon_path]
+        fixit_main(cmd)
 
 
 def lookup_manifest_paths(filenames_or_modules):
