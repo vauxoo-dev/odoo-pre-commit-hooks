@@ -231,6 +231,7 @@ class ChecksOdooModule(BaseChecker):
     def check_py(self):
         """Run fixit"""
         cfg=os.path.join(os.path.dirname(os.path.abspath(__file__)), "checks_odoo_module_fixit", "pyproject.toml")
+        import pdb;pdb.set_trace()
         fixit_main([f"--config-file={cfg}", "fix", self.odoo_addon_path, "--automatic"])
 
 

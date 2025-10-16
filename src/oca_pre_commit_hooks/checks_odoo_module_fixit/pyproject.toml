@@ -1,0 +1,2 @@
+[tool.fixit]
+enable = ["odoo_rules.no_installable_true_rule"]
