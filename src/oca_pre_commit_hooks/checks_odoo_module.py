@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-from pathlib import Path
-from fixit.api import fixit_paths
-from fixit.config import generate_config, parse_rule
-from fixit.ftypes import Options
-from fixit.api import print_result
-import os
 import ast
 import glob
 import os
@@ -13,8 +7,9 @@ from collections import defaultdict
 from pathlib import Path
 
 from colorama import init as colorama_init
-
-from fixit.cli import main as fixit_main
+from fixit.api import fixit_paths
+from fixit.config import parse_rule
+from fixit.ftypes import Options
 
 from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_xml, utils
 from oca_pre_commit_hooks.base_checker import BaseChecker
