@@ -1,11 +1,3 @@
-# [tool.fixit.fix]
-# rules = ["odoo_rules.no_installable_true_rule"]
-# enable = ["odoo_rules.no_installable_true_rule"]
-
-# [tool.fixit]
-# rules = ["odoo_rules.no_installable_true_rule"]
-# enable = ["odoo_rules.no_installable_true_rule"]
-
 [tool.fixit]
 enable = ["oca_pre_commit_hooks.checks_odoo_module_fixit"]
 disable = ["fixit.rules"]
