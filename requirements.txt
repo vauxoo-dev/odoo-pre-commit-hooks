@@ -1,10 +1,8 @@
 # xml checks
 lxml>=4.2.3
-
 # po checks
 polib==1.2.*
-
 colorama
+# git+https://github.com/Instagram/Fixit.git@14addb1#egg=fixit
+fixit @ git+https://github.com/Instagram/Fixit.git@14addb1
 packaging
-
-fixit

@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+from pathlib import Path
+from fixit.api import fixit_paths
+from fixit.config import generate_config, parse_rule
+from fixit.ftypes import Options
+from fixit.api import print_result
+import os
 import ast
 import glob
 import os
@@ -230,18 +236,30 @@ class ChecksOdooModule(BaseChecker):
     @utils.only_required_for_installable()
     def check_py(self):
         """Run fixit"""
-        # Enable rule path to be used --rules=checks_odoo_module_fixit
-        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        os.environ["FIXIT_ODOO_VERSION"] = self.module_version or os.getenv("VERSION") or ""
-        cmd = ["--rules=checks_odoo_module_fixit"]
-        if self.autofix:
-            cmd += ["fix", "--automatic"]
-        else:
-            cmd += ["lint"]
-        # TODO: R&D to use cfg file. I tried but it was not working well
+        # TODO: Remove 18.0 default value w/o errors
+        os.environ["FIXIT_ODOO_VERSION"] = str(self.module_version) or os.getenv("VERSION") or "18.0"
         # cfg=os.path.join(os.path.dirname(os.path.abspath(__file__)), "checks_odoo_module_fixit", "pyproject.toml")
-        # cmd = [f"--config-file={cfg}]"
-        fixit_main(cmd + [self.odoo_addon_path])
+        rule = parse_rule(".checks_odoo_module_fixit", Path(os.path.dirname(os.path.abspath(__file__))))
+        options = Options(debug=False, output_format="vscode", rules=(rule,))
+        results = fixit_paths(
+            paths=[Path(self.odoo_addon_path)],
+            options=options,
+            autofix=self.autofix,
+        )
+        for result in results:
+            # print_result(result, output_format=options.output_format)
+            if result.violation:
+                message = result.violation.message
+                if result.violation.autofixable and not self.autofix:
+                    message += " (has autofix)"
+                self.register_error(
+                    code=result.violation.rule_name,
+                    message=message,
+                    info=self.error,
+                    filepath=result.path.as_posix(),
+                    line=result.violation.range.start.line,
+                    column=result.violation.range.start.column,
+                )
 
 
 def lookup_manifest_paths(filenames_or_modules):

@@ -1,3 +1,11 @@
 [tool.fixit]
-enable = ["oca_pre_commit_hooks.checks_odoo_module_fixit"]
+enable = [
+    "checks_odoo_module_fixit",
+]
 disable = ["fixit.rules"]
+# formatter = "ufmt"
+# disable = ["fixit.rules"]
+
+# [[tool.fixit.overrides]]
+# path = "examples"
+# enable = ["checks_odoo_module_fixit"]
