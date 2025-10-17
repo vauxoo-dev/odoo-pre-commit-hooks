@@ -243,8 +243,10 @@ class ChecksOdooModule(BaseChecker):
             autofix=self.autofix,
         )
         for result in results:
-            # print_result(result, output_format=options.output_format)
             if result.violation:
+                # TODO: Define enable in order to avoid processing it without using it
+                if not self.is_message_enabled(result.violation.rule_name):
+                    continue
                 message = result.violation.message
                 if result.violation.autofixable and not self.autofix:
                     message += " (has autofix)"

@@ -99,14 +99,12 @@ class PreferEnvTranslationRule(LintRule):
     def visit_Call(self, node: cst.Call) -> None:  # noqa: B906 pylint:disable=invalid-name
         odoo_version_tuple = version_parse(ODOO_VERSION)
         if not odoo_version_tuple:
-            # TODO: R&D if there is a warning logger in the library
             warnings.warn(
                 f"Invalid manifest versions format ({ODOO_VERSION}). "
-                "It was not possible to run prefer_env_translation_rule",
+                "It was not possible if prefer_env_translation rule applies or not",
                 UserWarning,
                 stacklevel=2,
             )
-            return
         if not isinstance(node.func, cst.Name):
             return
         # TODO: R&D how to get the "version" from manifest of the current node's module
