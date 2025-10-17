@@ -5,8 +5,8 @@ from fixit import InvalidTestCase, LintRule, ValidTestCase
 class NoInstallableTrueRule(LintRule):
     """Identifies and removes 'installable': True from Odoo manifest files (__manifest__.py).
     'installable': True is the default and should be omitted for simplicity.
+    Same for other default values
     """
-
     INVALID = [
         InvalidTestCase(
             code="""
@@ -14,27 +14,27 @@ class NoInstallableTrueRule(LintRule):
     'installable': True,
     'depends': [],
     'author': '',
-    'name': 'Mi Módulo',
+    'name': 'My Module',
 }
-""",
+    """,
             expected_replacement="""
 {
-    'name': 'Mi Módulo',
+    'name': 'My Module',
 }
-""",
+    """,
         ),
         InvalidTestCase(
             code="""
 {
     'installable': True,
-    'name': 'Otro Módulo',
+    'name': 'Another Module',
 }
-""",
+    """,
             expected_replacement="""
 {
-    'name': 'Otro Módulo',
+    'name': 'Another Module',
 }
-""",
+    """,
         ),
         InvalidTestCase(
             code="""
@@ -42,36 +42,35 @@ class NoInstallableTrueRule(LintRule):
     "active": True,
     "installable": (
         True),
-    "name": "hola",
+    "name": "hello",
 }
-""",
+    """,
             expected_replacement="""
 {
-    "name": "hola",
+    "name": "hello",
 }
-""",
+    """,
         ),
     ]
 
-    # Define código que DEBE ser válido (VALID)
     VALID = [
         ValidTestCase(
             code="""
-{
-    'name': 'Mi Módulo',
-    'depends': ['base'],
-    'installable': False,
-    'active': False,
-}
-"""
+    {
+        'name': 'My Module',
+        'depends': ['base'],
+        'installable': False,
+        'active': False,
+    }
+    """
         ),
         ValidTestCase(
             code="""
-{
-    'name': 'Mi Módulo',
-    'depends': ['base'],
-}
-"""
+    {
+        'name': 'My Module',
+        'depends': ['base'],
+    }
+    """
         ),
     ]
 
