@@ -96,7 +96,7 @@ class PreferEnvTranslationRule(LintRule):
             ),
         ]
 
-    def visit_Call(self, node: cst.Call) -> None:  # # noqa: B906 pylint:disable=invalid-name
+    def visit_Call(self, node: cst.Call) -> None:  # noqa: B906 pylint:disable=invalid-name
         odoo_version_tuple = version_parse(ODOO_VERSION)
         if not odoo_version_tuple:
             # TODO: R&D if there is a warning logger in the library
