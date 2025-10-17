@@ -287,6 +287,12 @@ options:
 # Examples
 
 
+ * NoInstallableTrue
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6//Users/moylop260/odoo/odoo-pre-commit-hooks/test_repo/broken_module/__openerp__.py#L31 Delete default values (has autofix)
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6//Users/moylop260/odoo/odoo-pre-commit-hooks/test_repo/broken_module/__openerp__.py#L33 Delete default values (has autofix)
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6//Users/moylop260/odoo/odoo-pre-commit-hooks/test_repo/woversion_module/__manifest__.py#L8 Delete empty values. (has autofix)
+
  * csv-duplicate-record-id
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.1.6/test_repo/broken_module/ir.model.access.csv#L5 Duplicate CSV record `access_account_account_type`
