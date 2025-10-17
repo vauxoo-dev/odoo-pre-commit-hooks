@@ -21,6 +21,7 @@ EXPECTED_ERRORS = {
     "csv-syntax-error": 1,
     "file-not-used": 1,
     "manifest-syntax-error": 2,
+    "NoInstallableTrue": 3,
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-filter-wo-user": 1,
     "xml-dangerous-qweb-replace-low-priority": 9,
