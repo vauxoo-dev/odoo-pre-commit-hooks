@@ -75,7 +75,7 @@ class NoInstallableTrueRule(LintRule):
         ),
     ]
 
-    def visit_DictElement(self, node: cst.DictElement) -> None:
+    def visit_DictElement(self, node: cst.DictElement) -> None:  # pylint:disable=invalid-name
         if not isinstance(node.key, cst.SimpleString):
             return
         if (isinstance(node.value, cst.List) and not node.value.elements) or (

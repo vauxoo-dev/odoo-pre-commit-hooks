@@ -16,9 +16,8 @@ def version_parse(version_str):
 
 
 class PreferEnvTranslationRule(LintRule):
-    """
-    Replace _('text') with self.env._('text') only if '_' comes from 'odoo'.
-    """
+    """Replace _('text') with self.env._('text')
+    only if '_' comes from 'odoo'."""
 
     MESSAGE = "Use self.env._(...) instead of _(…) directly inside Odoo model methods."
     METADATA_DEPENDENCIES = (QualifiedNameProvider,)
@@ -97,12 +96,12 @@ class PreferEnvTranslationRule(LintRule):
             ),
         ]
 
-    def visit_Call(self, node: cst.Call) -> None:
+    def visit_Call(self, node: cst.Call) -> None:  # # noqa: B906 pylint:disable=invalid-name
         odoo_version_tuple = version_parse(ODOO_VERSION)
         if not odoo_version_tuple:
             # TODO: R&D if there is a warning logger in the library
             warnings.warn(
-                f"Invalid manifest versions format {{ODOO_VERSION}}. "
+                f"Invalid manifest versions format ({ODOO_VERSION}). "
                 "It was not possible to run prefer_env_translation_rule",
                 UserWarning,
                 stacklevel=2,

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# pylint:disable=print-used
 import ast
 import glob
 import os
