@@ -15,7 +15,6 @@ from fixit.config import collect_rules, parse_rule
 from fixit.ftypes import Config
 from packaging.version import InvalidVersion, Version
 
-from oca_pre_commit_hooks import checks_odoo_module_fixit
 from oca_pre_commit_hooks.base_checker import BaseChecker
 
 CHECKS_DISABLED_REGEX = re.compile(re.escape("oca-hooks:disable=") + r"([a-z\-,]+)")
@@ -168,7 +167,7 @@ def get_checks_docstring(check_classes):
             checks_docstring = re.sub(r"( )+\*", "*", checks_docstring)
     rule = parse_rule(
         ".checks_odoo_module_fixit",
-        Path(os.path.dirname(os.path.dirname(os.path.abspath(checks_odoo_module_fixit.__file__)))),
+        Path(__file__).resolve().parent,
     )
     if "ChecksOdooModule" in [check_class.__name__ for check_class in check_classes]:
         checks_docstring += "\n** Special fixit checks\n"
