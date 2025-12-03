@@ -108,9 +108,6 @@ class ChecksCommon(unittest.TestCase):
         file_paths = self.file_paths
         dir_paths = [os.path.dirname(i) for i in self.file_paths]
         for check2disable in self.expected_errors:
-            # TODO: Check why these two rules fail sometimes in this test
-            if check2disable in ["manifest-superfluous-key", "prefer-env-translation"]:
-                continue
             os.environ.pop(ENABLE_ENV_VAR, None)
             os.environ.pop(DISABLE_ENV_VAR, None)
             method = RND.choice(methods)
@@ -168,9 +165,6 @@ class ChecksCommon(unittest.TestCase):
         file_paths = self.file_paths
         dir_paths = [os.path.dirname(i) for i in self.file_paths]
         for check2enable in self.expected_errors:
-            # TODO: Check why these two rules fail sometimes in this test
-            if check2enable in ["manifest-superfluous-key", "prefer-env-translation"]:
-                continue
             os.environ.pop(ENABLE_ENV_VAR, None)
             os.environ.pop(DISABLE_ENV_VAR, None)
             method = RND.choice(methods)

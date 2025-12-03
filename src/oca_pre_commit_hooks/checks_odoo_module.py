@@ -241,8 +241,12 @@ class ChecksOdooModule(BaseChecker):
         rule = parse_rule(".checks_odoo_module_fixit", Path(os.path.dirname(os.path.abspath(__file__))))
         lint_rules = collect_rules(Config(enable=[rule], disable=[], python_version=None))
         return [
-            parse_rule(
-                f"{lint_rule.__module__.replace('fixit.local', '')}", Path(os.path.dirname(os.path.abspath(__file__)))
+            (
+                parse_rule(
+                    f"{lint_rule.__module__.replace('fixit.local', '')}",
+                    Path(os.path.dirname(os.path.abspath(__file__))),
+                ),
+                lint_rule.name,
             )
             for lint_rule in lint_rules
             if (
@@ -255,7 +259,7 @@ class ChecksOdooModule(BaseChecker):
 
     def _get_fixit_enabled_rules(self, manifest_rule):
         lint_rules = self._get_fixit_rules(manifest_rule)
-        return [lint_rule for lint_rule in lint_rules if self.is_message_enabled(lint_rule.name)]
+        return [lint_rule for lint_rule, lint_rule_name in lint_rules if self.is_message_enabled(lint_rule_name)]
 
     @utils.only_required_for_installable()
     def check_py(self):
