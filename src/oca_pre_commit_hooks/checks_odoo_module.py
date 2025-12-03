@@ -5,6 +5,7 @@ import os
 import sys
 from collections import defaultdict
 from functools import lru_cache
+from itertools import chain
 from pathlib import Path
 
 from colorama import init as colorama_init
@@ -235,7 +236,7 @@ class ChecksOdooModule(BaseChecker):
         self.checks_errors.extend(checks_obj.checks_errors)
 
     @lru_cache(maxsize=64)
-    def _get_fixit_rules(self):
+    def _get_fixit_rules(self, manifest_rule=False):
         rule = parse_rule(".checks_odoo_module_fixit", Path(os.path.dirname(os.path.abspath(__file__))))
         lint_rules = collect_rules(Config(enable=[rule], disable=[], python_version=None))
         lint_rules_enabled = [
@@ -244,6 +245,12 @@ class ChecksOdooModule(BaseChecker):
             )
             for lint_rule in lint_rules
             if self.is_message_enabled(lint_rule.name)
+            and (
+                manifest_rule
+                and lint_rule.name.startswith("manifest-")
+                or not manifest_rule
+                and not lint_rule.name.startswith("manifest-")
+            )
         ]
         return lint_rules_enabled
 
@@ -252,19 +259,34 @@ class ChecksOdooModule(BaseChecker):
         """Run fixit"""
         os.environ["FIXIT_ODOO_VERSION"] = str(self.module_version) or os.getenv("VERSION") or "18.0"
         os.environ["FIXIT_AUTOFIX"] = str(self.autofix)
-        lint_rules_enabled = self._get_fixit_rules()
-        if not lint_rules_enabled:
+        lint_rules_enabled_all = self._get_fixit_rules()
+        lint_rules_enabled_manifest = self._get_fixit_rules(manifest_rule=True)
+        if not (lint_rules_enabled_all or lint_rules_enabled_manifest):
             return
         # TODO: R&D to optimize run the manifest checks only for __manifest__.py files
         #       My first POC was that fixit is not able to filter the checks by file but maybe I could be wrong
-        options = Options(debug=False, output_format="vscode", rules=lint_rules_enabled)
-        results = fixit_paths(
-            paths=[Path(self.odoo_addon_path)],
-            options=options,
-            autofix=self.autofix,
-            parallel=False,
-        )
-        for result in results:
+        results = []
+        if lint_rules_enabled_manifest:
+            manifest_options = Options(debug=False, output_format="vscode", rules=lint_rules_enabled_manifest)
+            results.append(
+                fixit_paths(
+                    paths=[Path(self.manifest_path)],
+                    options=manifest_options,
+                    autofix=self.autofix,
+                    parallel=False,
+                )
+            )
+        if lint_rules_enabled_all:
+            all_options = Options(debug=False, output_format="vscode", rules=lint_rules_enabled_all)
+            results.append(
+                fixit_paths(
+                    paths=[Path(self.odoo_addon_path)],
+                    options=all_options,
+                    autofix=self.autofix,
+                    parallel=False,
+                )
+            )
+        for result in chain.from_iterable(results):
             if not result.violation:
                 continue
             message = result.violation.message
