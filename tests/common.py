@@ -115,7 +115,7 @@ class ChecksCommon(unittest.TestCase):
             os.environ.pop(DISABLE_ENV_VAR, None)
             method = RND.choice(methods)
             if self.compatible_with_directories:
-                self.file_paths = RND.choice([file_paths, dir_paths])
+                self.file_paths = RND.choice([file_paths, dir_paths])  # pylint: disable=attribute-defined-outside-init
             method(check2disable)
 
     def _test_checks_disable_one_by_one(self, check2disable):
@@ -175,7 +175,7 @@ class ChecksCommon(unittest.TestCase):
             os.environ.pop(DISABLE_ENV_VAR, None)
             method = RND.choice(methods)
             if self.compatible_with_directories:
-                self.file_paths = RND.choice([file_paths, dir_paths])
+                self.file_paths = RND.choice([file_paths, dir_paths])  # pylint: disable=attribute-defined-outside-init
             method(check2enable)
 
     def _test_checks_enable_one_by_one(self, check2enable):
