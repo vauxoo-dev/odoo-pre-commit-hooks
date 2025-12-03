@@ -235,32 +235,35 @@ class ChecksOdooModule(BaseChecker):
             check_meth()
         self.checks_errors.extend(checks_obj.checks_errors)
 
-    @lru_cache(maxsize=64)
-    def _get_fixit_rules(self, manifest_rule=False):
+    @staticmethod
+    @lru_cache(maxsize=32)
+    def _get_fixit_rules(manifest_rule):
         rule = parse_rule(".checks_odoo_module_fixit", Path(os.path.dirname(os.path.abspath(__file__))))
         lint_rules = collect_rules(Config(enable=[rule], disable=[], python_version=None))
-        lint_rules_enabled = [
+        return [
             parse_rule(
                 f"{lint_rule.__module__.replace('fixit.local', '')}", Path(os.path.dirname(os.path.abspath(__file__)))
             )
             for lint_rule in lint_rules
-            if self.is_message_enabled(lint_rule.name)
-            and (
+            if (
                 manifest_rule
                 and lint_rule.name.startswith("manifest-")
                 or not manifest_rule
                 and not lint_rule.name.startswith("manifest-")
             )
         ]
-        return lint_rules_enabled
+
+    def _get_fixit_enabled_rules(self, manifest_rule):
+        lint_rules = self._get_fixit_rules(manifest_rule)
+        return [lint_rule for lint_rule in lint_rules if self.is_message_enabled(lint_rule.name)]
 
     @utils.only_required_for_installable()
     def check_py(self):
         """Run fixit"""
         os.environ["FIXIT_ODOO_VERSION"] = str(self.module_version) or os.getenv("VERSION") or "18.0"
         os.environ["FIXIT_AUTOFIX"] = str(self.autofix)
-        lint_rules_enabled_all = self._get_fixit_rules()
-        lint_rules_enabled_manifest = self._get_fixit_rules(manifest_rule=True)
+        lint_rules_enabled_all = self._get_fixit_enabled_rules(manifest_rule=False)
+        lint_rules_enabled_manifest = self._get_fixit_enabled_rules(manifest_rule=True)
         if not (lint_rules_enabled_all or lint_rules_enabled_manifest):
             return
         # TODO: R&D to optimize run the manifest checks only for __manifest__.py files
