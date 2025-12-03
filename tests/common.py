@@ -49,6 +49,7 @@ class ChecksCommon(unittest.TestCase):
         cls.original_test_repo_path = os.path.join(
             os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "test_repo"
         )
+        cls.compatible_with_directories = True  # only run with files .po, .py or is compatible with directories
 
     def setUp(self):
         super().setUp()
@@ -83,6 +84,20 @@ class ChecksCommon(unittest.TestCase):
         new_content = re_sub.sub(f"{sub_start}\n\n{substitution}\n\n{sub_end}", content)
         return new_content
 
+    @unittest.skip("Repeated")
+    def test_checks_basic(self):
+        all_check_errors = self.checks_run(self.file_paths, no_exit=True, no_verbose=False)
+        real_errors = self.get_count_code_errors(all_check_errors)
+        # Uncommet to get sorted values to update EXPECTED_ERRORS dict
+        # print("\n".join(f"'{key}':{real_errors[key]}," for key in sorted(real_errors)))
+        assertDictEqual(self, real_errors, self.expected_errors)
+
+    def test_checks_with_cli(self):
+        sys.argv = ["", "--no-exit", "--no-verbose"] + self.file_paths
+        all_check_errors = self.checks_cli_main()
+        real_errors = self.get_count_code_errors(all_check_errors)
+        assertDictEqual(self, real_errors, self.expected_errors)
+
     def test_checks_disable_one_by_one_with_random_cli_env_conf(self):
         """Faster way to test disable one by one using random method selection"""
         methods = [
@@ -90,6 +105,8 @@ class ChecksCommon(unittest.TestCase):
             for name in dir(self)
             if name.startswith("_test_checks_disable_one_by_one") and callable(getattr(self, name))
         ]
+        file_paths = self.file_paths
+        dir_paths = [os.path.dirname(i) for i in self.file_paths]
         for check2disable in self.expected_errors:
             # TODO: Check why these two rules fail sometimes in this test
             if check2disable in ["manifest-superfluous-key", "prefer-env-translation"]:
@@ -98,6 +115,8 @@ class ChecksCommon(unittest.TestCase):
             os.environ.pop(ENABLE_ENV_VAR, None)
             os.environ.pop(DISABLE_ENV_VAR, None)
             method = RND.choice(methods)
+            if self.compatible_with_directories:
+                self.file_paths = RND.choice([file_paths, dir_paths])
             method(check2disable)
 
     def _test_checks_disable_one_by_one(self, check2disable):
@@ -147,6 +166,8 @@ class ChecksCommon(unittest.TestCase):
             for name in dir(self)
             if name.startswith("_test_checks_enable_one_by_one") and callable(getattr(self, name))
         ]
+        file_paths = self.file_paths
+        dir_paths = [os.path.dirname(i) for i in self.file_paths]
         for check2enable in self.expected_errors:
             # TODO: Check why these two rules fail sometimes in this test
             if check2enable in ["manifest-superfluous-key", "prefer-env-translation"]:
@@ -155,6 +176,8 @@ class ChecksCommon(unittest.TestCase):
             os.environ.pop(ENABLE_ENV_VAR, None)
             os.environ.pop(DISABLE_ENV_VAR, None)
             method = RND.choice(methods)
+            if self.compatible_with_directories:
+                self.file_paths = RND.choice([file_paths, dir_paths])
             method(check2enable)
 
     def _test_checks_enable_one_by_one(self, check2enable):

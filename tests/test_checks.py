@@ -45,19 +45,7 @@ EXPECTED_ERRORS = {
 }
 
 
-class TestChecksWithDirectories(common.ChecksCommon):
-    def setUp(self):
-        super().setUp()
-        self.file_paths = glob.glob(os.path.join(self.test_repo_path, "*", "__openerp__.py")) + glob.glob(
-            os.path.join(self.test_repo_path, "*", "__manifest__.py")
-        )
-        self.file_paths = [os.path.dirname(i) for i in self.file_paths]
-        self.checks_run = oca_pre_commit_hooks.checks_odoo_module.run
-        self.checks_cli_main = oca_pre_commit_hooks.cli.main
-        self.expected_errors = EXPECTED_ERRORS.copy()
-
-
-class TestChecksWithFiles(common.ChecksCommon):
+class TestChecks(common.ChecksCommon):
 
     def setUp(self):
         super().setUp()

@@ -36,6 +36,7 @@ class TestChecksPO(common.ChecksCommon):
         po_glob_pattern = os.path.join(cls.test_repo_path, "**", "*.po")
         pot_glob_pattern = f"{po_glob_pattern}t"
         cls.file_paths = glob.glob(po_glob_pattern, recursive=True) + glob.glob(pot_glob_pattern, recursive=True)
+        cls.compatible_with_directories = False  # only run with files .po
 
     def setUp(self):
         super().setUp()
