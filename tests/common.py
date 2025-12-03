@@ -171,7 +171,6 @@ class ChecksCommon(unittest.TestCase):
         for check2enable in self.expected_errors:
             # TODO: Check why these two rules fail sometimes in this test
             if check2enable in ["manifest-superfluous-key", "prefer-env-translation"]:
-                # Skip this one as it is already tested in manifest_superfluous_key_rule.py
                 continue
             os.environ.pop(ENABLE_ENV_VAR, None)
             os.environ.pop(DISABLE_ENV_VAR, None)
