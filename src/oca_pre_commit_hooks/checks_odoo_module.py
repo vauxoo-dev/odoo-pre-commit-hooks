@@ -4,6 +4,7 @@ import glob
 import os
 import sys
 from collections import defaultdict
+from functools import lru_cache
 from pathlib import Path
 
 from colorama import init as colorama_init
@@ -233,11 +234,8 @@ class ChecksOdooModule(BaseChecker):
             check_meth()
         self.checks_errors.extend(checks_obj.checks_errors)
 
-    @utils.only_required_for_installable()
-    def check_py(self):
-        """Run fixit"""
-        os.environ["FIXIT_ODOO_VERSION"] = str(self.module_version) or os.getenv("VERSION") or "18.0"
-        os.environ["FIXIT_AUTOFIX"] = str(self.autofix)
+    @lru_cache(maxsize=64)
+    def _get_fixit_rules(self):
         rule = parse_rule(".checks_odoo_module_fixit", Path(os.path.dirname(os.path.abspath(__file__))))
         lint_rules = collect_rules(Config(enable=[rule], disable=[], python_version=None))
         lint_rules_enabled = [
@@ -247,6 +245,14 @@ class ChecksOdooModule(BaseChecker):
             for lint_rule in lint_rules
             if self.is_message_enabled(lint_rule.name)
         ]
+        return lint_rules_enabled
+
+    @utils.only_required_for_installable()
+    def check_py(self):
+        """Run fixit"""
+        os.environ["FIXIT_ODOO_VERSION"] = str(self.module_version) or os.getenv("VERSION") or "18.0"
+        os.environ["FIXIT_AUTOFIX"] = str(self.autofix)
+        lint_rules_enabled = self._get_fixit_rules()
         if not lint_rules_enabled:
             return
         # TODO: R&D to optimize run the manifest checks only for __manifest__.py files
