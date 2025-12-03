@@ -1,7 +1,7 @@
 import libcst as cst
 from fixit import InvalidTestCase, ValidTestCase
 
-from . import common
+from .. import checks_odoo_module_fixit_common as common
 
 
 class ManifestSuperfluousKeyRule(common.Common):

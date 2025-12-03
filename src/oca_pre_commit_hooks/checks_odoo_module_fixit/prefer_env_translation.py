@@ -5,7 +5,7 @@ from fixit import InvalidTestCase, ValidTestCase
 from libcst.metadata import QualifiedName, QualifiedNameProvider
 
 from .. import utils
-from . import common
+from .. import checks_odoo_module_fixit_common as common
 
 
 class PreferEnvTranslationRule(common.Common):
