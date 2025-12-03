@@ -106,7 +106,8 @@ class PreferEnvTranslationRule(common.Common):
             if isinstance(qname, QualifiedName) and (
                 qname.name.startswith("odoo._") or qname.name.startswith("openerp._")
             ):
-                self.report(node, replacement=self.fix(node))
+                replacement = self.fix(node)
+                self.report(node, replacement=replacement)
                 break
 
     def fix(self, node: cst.Call) -> cst.Call:

@@ -13,6 +13,7 @@ class FixitTest(unittest.TestCase):
     def test_fixit(self):
         """Run 'fixit test' based on fixit.cli.test method"""
         os.environ["FIXIT_ODOO_VERSION"] = "18.0"
+        os.environ["FIXIT_AUTOFIX"] = "True"
 
         rule = parse_rule(
             ".checks_odoo_module_fixit",

@@ -5,7 +5,6 @@ from fixit import LintRule
 
 class Common(LintRule):
     def report(self, *args, **kwargs) -> None:
-        # TODO: Support "fixit test"
         if os.environ.get("FIXIT_AUTOFIX") != "True":
             # skip replacement to improve performance skipping the diff process
             # if autofix is not enabled
