@@ -90,9 +90,15 @@ class ManifestSuperfluousKeyRule(common.Common):
     def visit_DictElement(self, node: cst.DictElement) -> None:  # pylint:disable=invalid-name
         if not isinstance(node.key, cst.SimpleString):
             return
-        if (isinstance(node.value, cst.List) and not node.value.elements) or (
-            isinstance(node.value, cst.SimpleString) and not node.value.evaluated_value
-        ) or (node.key.evaluated_value in ("active", "installable") and isinstance(node.value, cst.Name) and node.value.value == "True"):
+        if (
+            (isinstance(node.value, cst.List) and not node.value.elements)
+            or (isinstance(node.value, cst.SimpleString) and not node.value.evaluated_value)
+            or (
+                node.key.evaluated_value in ("active", "installable")
+                and isinstance(node.value, cst.Name)
+                and node.value.value == "True"
+            )
+        ):
             self.report(
                 node,
                 "Delete empty values.",

@@ -13,7 +13,6 @@ from oca_pre_commit_hooks import utils
 from oca_pre_commit_hooks.global_parser import CONFIG_NAME, DISABLE_ENV_VAR, ENABLE_ENV_VAR
 
 
-
 def assertDictEqual(self, d1, d2, msg=None):
     # pylint:disable=invalid-name
     """Original method does not show the correct item diff

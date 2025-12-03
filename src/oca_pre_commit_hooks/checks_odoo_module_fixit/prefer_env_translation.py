@@ -4,8 +4,7 @@ import libcst as cst
 from fixit import InvalidTestCase, ValidTestCase
 from libcst.metadata import QualifiedName, QualifiedNameProvider
 
-from .. import utils
-from .. import checks_odoo_module_fixit_common as common
+from .. import checks_odoo_module_fixit_common as common, utils
 
 
 class PreferEnvTranslationRule(common.Common):
