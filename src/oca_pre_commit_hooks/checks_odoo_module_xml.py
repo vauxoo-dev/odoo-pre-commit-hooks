@@ -138,6 +138,43 @@ class ChecksOdooModuleXML(BaseChecker):
         replaces = cls.xpath_view_replaces(arch)
         return bool(replaces)
 
+    @staticmethod
+    def _read_node(filename, node):
+        """Read the content of file spliting the content in 3 pieces:
+        - before the xml node
+        - the xml node
+        - after the xml node"""
+        content_before = b""
+        content_node = b""
+        content_after = b""
+        if (node_previous := node.getprevious()) is not None:
+            start_line = node_previous.sourceline + 1
+        else:
+            start_line = 2
+        end_line = node.sourceline
+        with open(filename, "rb") as f_content:
+            for no_line, line in enumerate(f_content, start=1):
+                if no_line < start_line:
+                    content_before += line
+                elif start_line <= no_line <= end_line:
+                    content_node += line
+                else:
+                    content_after += line
+        return content_before, content_node, content_after
+
+    # def read_content_start_end(filename, num_line_start, num_line_end):
+    #     """Return the content of the file only for the number of line
+    #     It avoid to load the whole file in memory
+    #     """
+    #     content = b""
+    #     with open(filename, "rb") as f_content:
+    #         for num_current_line, line in enumerate(f_content, start=1):
+    #             if num_line_start <= num_current_line <= num_line_end:
+    #                 content += line
+    #             if num_current_line > num_line_end:
+    #                 break
+    #     return content
+
     @utils.only_required_for_checks("xml-header-missing", "xml-header-wrong")
     def check_xml_header(self):
         """* Check xml-header-missing
@@ -290,6 +327,7 @@ class ChecksOdooModuleXML(BaseChecker):
         `<record id="xmlid_name1" ...`
         """
         # redundant_module_name
+        # TODO: Process safe way using only one line
         record_id = record.get("id")
         if not record_id:
             return
@@ -308,13 +346,11 @@ class ChecksOdooModuleXML(BaseChecker):
             if self.autofix:
                 # Modify the record attrib to propagate the change to other checks
                 record.attrib["id"] = xmlid_name
-                content = b""
-                with open(manifest_data["filename"], "rb") as f_xml:
-                    for no_line, line in enumerate(f_xml, start=1):
-                        if no_line == record.sourceline:
-                            line = line.replace(f' id="{record_id}" '.encode(), f' id="{xmlid_name}" '.encode())
-                        content += line
-                utils.perform_fix(manifest_data["filename"], content)
+                bef, during, aft = self._read_node(manifest_data["filename"], record)
+                during2 = during.replace(f' id="{record_id}"'.encode(), f' id="{xmlid_name}"'.encode(), 1)
+                if during2 != during:
+                    content = bef + during2 + aft
+                    utils.perform_fix(manifest_data["filename"], content)
 
         first_attr = record.keys()[0]
         if first_attr != "id" and self.is_message_enabled("xml-id-position-first", manifest_data["disabled_checks"]):
@@ -326,24 +362,55 @@ class ChecksOdooModuleXML(BaseChecker):
                 line=record.sourceline,
             )
             if self.autofix:
-                # Not compatible with multi-line because it is complex to parse and fix and could raise new errors
-                # only compatible if the record tag tostring is the same than the source ~80% of the cases
                 attrs = dict(record.attrib)
                 old_tag = f"{record.tag} " + " ".join(f'{k}="{v}"' for k, v in attrs.items())
                 new_attrs = {"id": attrs.pop("id"), **attrs}
                 new_tag = f"{record.tag} " + " ".join(f'{k}="{v}"' for k, v in new_attrs.items())
 
-                # Update the record attrib to propagate the change to other checks
-                record.attrib.clear()
-                record.attrib.update(new_attrs)
+                bef, during, aft = self._read_node(manifest_data["filename"], record)
+                spaces_dict = {}
+                old_tag = ""
+                for attrib in record.attrib:
+                    res = re.search(
+                        rf'(?P<{attrib}>\s+){attrib}\s*=\s*"'.encode(), during, flags=re.MULTILINE | re.DOTALL
+                    )
+                    spaces_dict[attrib] = res.group(attrib) if res else b" "
+                    old_tag += f'{spaces_dict[attrib].decode("UTF-8")}{attrib}="{new_attrs[attrib]}"'
 
-                content = b""
-                with open(manifest_data["filename"], "rb") as f_xml:
-                    for no_line, line in enumerate(f_xml, start=1):
-                        if no_line == record.sourceline:
-                            line = line.replace(old_tag.encode("UTF-8"), new_tag.encode("UTF-8"))
-                        content += line
-                utils.perform_fix(manifest_data["filename"], content)
+                first_attr_spaces = spaces_dict[first_attr]
+                spaces_dict[first_attr] = spaces_dict["id"]
+                spaces_dict["id"] = first_attr_spaces
+                new_tag = ""
+                for attr in new_attrs:
+                    new_tag += f'{spaces_dict[attr].decode("UTF-8")}{attr}="{new_attrs[attr]}"'
+
+                during2 = during.replace(old_tag.encode(), new_tag.encode(), 1)
+                if during2 != during:
+
+                    # Update the record attrib to propagate the change to other checks
+                    record.attrib.clear()
+                    record.attrib.update(new_attrs)
+
+                    # during = during.replace(f' id="{record_id}"'.encode(), f' id="{xmlid_name}"'.encode(), 1)
+                    content = bef + during2 + aft
+                    utils.perform_fix(manifest_data["filename"], content)
+
+                # content = b""
+                # # record.sourceline returns the end line number
+                # # so we need to get the start line number with previous node
+                # start_line = record.getprevious().sourceline + 1
+                # end_line = record.sourceline
+
+                # # if node_next := record.getnext():
+                # #     node_next_sourceline = node_next.sourceline
+                # # record.getnext()
+                # # content = self.read_content_start_end(manifest_data["filename"], start_line, end_line)
+                # with open(manifest_data["filename"], "rb") as f_xml:
+                #     for no_line, line in enumerate(f_xml, start=1):
+                #         if no_line == record.sourceline:
+                #             line = line.replace(old_tag.encode("UTF-8"), new_tag.encode("UTF-8"))
+                #         content += line
+                # utils.perform_fix(manifest_data["filename"], content)
 
     @utils.only_required_for_checks("xml-view-dangerous-replace-low-priority", "xml-deprecated-tree-attribute")
     def visit_xml_record_view(self, manifest_data, record):

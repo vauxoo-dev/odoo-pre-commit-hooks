@@ -32,7 +32,7 @@ EXPECTED_ERRORS = {
     "xml-duplicate-fields": 3,
     "xml-duplicate-record-id": 2,
     "xml-not-valid-char-link": 2,
-    "xml-redundant-module-name": 2,
+    "xml-redundant-module-name": 3,
     "xml-syntax-error": 2,
     "xml-view-dangerous-replace-low-priority": 7,
     "xml-xpath-translatable-item": 4,
@@ -41,7 +41,7 @@ EXPECTED_ERRORS = {
     "xml-duplicate-template-id": 9,
     "xml-header-missing": 1,
     "xml-header-wrong": 19,
-    "xml-id-position-first": 3,
+    "xml-id-position-first": 5,
     "xml-deprecated-oe-chatter": 1,
 }
 
@@ -180,6 +180,11 @@ class TestChecks(common.ChecksCommon):
             b'<menuitem id="menu_root" name="Root" />',
             content,
             "The XML wrong xmlid order and redundant module name was not fixed",
+        )
+        self.assertIn(
+            b'<menuitem\n        id="menu_root2"\n        name="Root 2"',
+            content,
+            "The XML wrong xmlid order multiline and redundant module name was not fixed",
         )
 
         with open(fname_redundant_module_name, "rb") as f_redundant_module_name:
