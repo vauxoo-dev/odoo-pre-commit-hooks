@@ -328,6 +328,7 @@ class ChecksOdooModuleXML(BaseChecker):
         """
         # redundant_module_name
         # TODO: Process safe way using only one line
+        # TODO: Compatible with single quotes id='xmlid' instead of id="xmlid"
         record_id = record.get("id")
         if not record_id:
             return
