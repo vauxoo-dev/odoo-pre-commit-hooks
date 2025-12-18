@@ -364,8 +364,6 @@ class ChecksOdooModuleXML(BaseChecker):
                     )
                     spaces_dict[attrib] = res.group(attrib) if res else b" "
                     old_tag += f'{spaces_dict[attrib].decode("UTF-8")}{attrib}="{new_attrs[attrib]}"'
-                    if "id" == attrib:
-                        break
 
                 first_attr_spaces = spaces_dict[first_attr]
                 spaces_dict[first_attr] = spaces_dict["id"]
@@ -373,8 +371,6 @@ class ChecksOdooModuleXML(BaseChecker):
                 new_tag = ""
                 for attr in new_attrs:
                     new_tag += f'{spaces_dict[attr].decode("UTF-8")}{attr}="{new_attrs[attr]}"'
-                    if "id" == attr:
-                        break
 
                 during2 = during.replace(old_tag.encode(), new_tag.encode(), 1)
                 if during2 != during:
