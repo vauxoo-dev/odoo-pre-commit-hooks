@@ -162,19 +162,6 @@ class ChecksOdooModuleXML(BaseChecker):
                     content_after += line
         return content_before, content_node, content_after
 
-    # def read_content_start_end(filename, num_line_start, num_line_end):
-    #     """Return the content of the file only for the number of line
-    #     It avoid to load the whole file in memory
-    #     """
-    #     content = b""
-    #     with open(filename, "rb") as f_content:
-    #         for num_current_line, line in enumerate(f_content, start=1):
-    #             if num_line_start <= num_current_line <= num_line_end:
-    #                 content += line
-    #             if num_current_line > num_line_end:
-    #                 break
-    #     return content
-
     @utils.only_required_for_checks("xml-header-missing", "xml-header-wrong")
     def check_xml_header(self):
         """* Check xml-header-missing
@@ -399,23 +386,6 @@ class ChecksOdooModuleXML(BaseChecker):
                     # during = during.replace(f' id="{record_id}"'.encode(), f' id="{xmlid_name}"'.encode(), 1)
                     content = bef + during2 + aft
                     utils.perform_fix(manifest_data["filename"], content)
-
-                # content = b""
-                # # record.sourceline returns the end line number
-                # # so we need to get the start line number with previous node
-                # start_line = record.getprevious().sourceline + 1
-                # end_line = record.sourceline
-
-                # # if node_next := record.getnext():
-                # #     node_next_sourceline = node_next.sourceline
-                # # record.getnext()
-                # # content = self.read_content_start_end(manifest_data["filename"], start_line, end_line)
-                # with open(manifest_data["filename"], "rb") as f_xml:
-                #     for no_line, line in enumerate(f_xml, start=1):
-                #         if no_line == record.sourceline:
-                #             line = line.replace(old_tag.encode("UTF-8"), new_tag.encode("UTF-8"))
-                #         content += line
-                # utils.perform_fix(manifest_data["filename"], content)
 
     @utils.only_required_for_checks("xml-view-dangerous-replace-low-priority", "xml-deprecated-tree-attribute")
     def visit_xml_record_view(self, manifest_data, record):
