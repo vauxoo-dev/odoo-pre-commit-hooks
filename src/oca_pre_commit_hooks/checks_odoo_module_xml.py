@@ -149,8 +149,10 @@ class ChecksOdooModuleXML(BaseChecker):
         content_after = b""
         if (node_previous := node.getprevious()) is not None:
             start_line = node_previous.sourceline + 1
+        elif (node_parent := node.getparent()) is not None:
+            start_line = node_parent.sourceline + 1
         else:
-            start_line = 2
+            start_line = 2  # it is the first element and it is the root
         end_line = node.sourceline
         with open(filename, "rb") as f_content:
             for no_line, line in enumerate(f_content, start=1):
