@@ -326,20 +326,19 @@ class ChecksOdooModuleXML(BaseChecker):
                 line=record.sourceline,
             )
             if self.autofix:
-                content = b""
-                with open(manifest_data["filename"], "rb") as f_xml:
-                    for no_line, line in enumerate(f_xml, start=1):
-                        if no_line == record.sourceline:
-                            # TODO: Use regex
-                            # TODO: compatible with multiline attributes
-                            line2 = line.replace(f' id="{record_id}" '.encode(), f' id="{xmlid_name}" '.encode())
-                            line2 = line.replace(f" id='{record_id}' ".encode(), f" id='{xmlid_name}' ".encode())
-                            if line2 != line:
-                                # Modify the record attrib to propagate the change to other checks
-                                record.attrib["id"] = xmlid_name
-                                content += line2
-                        content += line
-                utils.perform_fix(manifest_data["filename"], content)
+                bef, during, aft = self._read_node(manifest_data["filename"], record)
+                pattern = rb'\bid\s*=\s*(?P<q>["\'])(?P<id>' + re.escape(record_id.encode()) + rb')(?P=q)'
+                during2 = re.sub(
+                    pattern,
+                    rb'id=\g<q>' + xmlid_name.encode() + rb'\g<q>',
+                    during,
+                    count=1
+                )
+                if during2 != during:
+                    # Modify the record attrib to propagate the change to other checks
+                    record.attrib["id"] = xmlid_name
+                    content = bef + during2 + aft
+                    utils.perform_fix(manifest_data["filename"], content)
         
         first_attr = record.keys()[0]
         if first_attr != "id" and self.is_message_enabled("xml-id-position-first", manifest_data["disabled_checks"]):
