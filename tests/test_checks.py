@@ -177,7 +177,7 @@ class TestChecks(common.ChecksCommon):
             b'<record id="view_ir_config_search" model="ir.ui.view">', content, "The XML wrong xmlid was not fixed"
         )
         self.assertIn(
-            b'<menuitem id=\'menu_root\' name="Root" />',
+            b"<menuitem id='menu_root' name=\"Root\" />",
             content,
             "The XML wrong xmlid order and redundant module name was not fixed",
         )

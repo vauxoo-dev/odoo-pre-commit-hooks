@@ -327,13 +327,8 @@ class ChecksOdooModuleXML(BaseChecker):
             )
             if self.autofix:
                 bef, during, aft = self._read_node(manifest_data["filename"], record)
-                pattern = rb'\bid\s*=\s*(?P<q>["\'])(?P<id>' + re.escape(record_id.encode()) + rb')(?P=q)'
-                during2 = re.sub(
-                    pattern,
-                    rb'id=\g<q>' + xmlid_name.encode() + rb'\g<q>',
-                    during,
-                    count=1
-                )
+                pattern = rb'\bid\s*=\s*(?P<q>["\'])(?P<id>' + re.escape(record_id.encode()) + rb")(?P=q)"
+                during2 = re.sub(pattern, rb"id=\g<q>" + xmlid_name.encode() + rb"\g<q>", during, count=1)
                 if during2 != during:
                     # Modify the record attrib to propagate the change to other checks
                     record.attrib["id"] = xmlid_name
@@ -352,19 +347,18 @@ class ChecksOdooModuleXML(BaseChecker):
                 attrs = dict(record.attrib)
                 # id_value = attrs.pop("id")
                 # new_attrs = {"id": id_value, **attrs}
-                
+
                 # Update the record attrib to propagate the change to other checks
                 # record.attrib.clear()
                 # record.attrib.update(new_attrs)
-                
+
                 # Read the entire file
                 bef, during, aft = self._read_node(manifest_data["filename"], record)
 
-                
                 # Build regex pattern to match the tag with all its known attributes
                 # sourceline is the last line of the last attribute, so we need to search backwards
                 tag_name = re.escape(record.tag)
-                
+
                 # Create a pattern that matches all known attributes in any order
                 # Each attribute: attrname="attrvalue" with optional whitespace
                 attr_patterns = []
@@ -384,13 +378,13 @@ class ChecksOdooModuleXML(BaseChecker):
                 # Pattern for the complete opening tag
                 # <tag_name whitespace attr1 whitespace attr2 ... whitespace>
                 # Using DOTALL to match across lines
-                attrs_regex = r''.join(attr_patterns)
+                attrs_regex = r"".join(attr_patterns)
                 pattern = (
-                    rf'(?P<open_{record.tag}><{tag_name})'  # Opening tag with space
-                    rf'{attrs_regex}'    # All attributes with whitespace between them
-                    rf'(?P<close_{record.tag}>\s*(/?)>)'         # Optional self-closing and closing >
+                    rf"(?P<open_{record.tag}><{tag_name})"  # Opening tag with space
+                    rf"{attrs_regex}"  # All attributes with whitespace between them
+                    rf"(?P<close_{record.tag}>\s*(/?)>)"  # Optional self-closing and closing >
                 )
-                
+
                 # if "menu_root" in record.attrib.get("id", ""):
                 #     import pdb;pdb.set_trace()
                 # Search with multiline and dotall flags
@@ -398,7 +392,7 @@ class ChecksOdooModuleXML(BaseChecker):
                 if match:
                     keys = [f"open_{record.tag}"] + keys + [f"close_{record.tag}"]
                     match_dict = match.groupdict()
-                    recreate = ''.join(match_dict[k] for k in keys)
+                    recreate = "".join(match_dict[k] for k in keys)
                     original = match.group()
                     # import pdb;pdb.set_trace()
                     during2 = during.replace(original.encode(), recreate.encode(), 1)
@@ -410,21 +404,20 @@ class ChecksOdooModuleXML(BaseChecker):
                         record.attrib.update(new_attrs)
                         utils.perform_fix(manifest_data["filename"], bef + during2 + aft)
 
-                
                 # if match:
                 #     # Found the tag, now reconstruct it with id first
                 #     old_tag = match.group(0)
-                    
+
                 #     # Determine if this is multiline by checking for newlines
                 #     is_multiline = '\n' in old_tag
-                    
+
                 #     if is_multiline:
                 #         # Extract indentation from the original tag
                 #         lines = old_tag.split('\n')
                 #         # Get base indentation from the first line (tag name line)
                 #         first_line = lines[0]
                 #         base_indent = len(first_line) - len(first_line.lstrip())
-                        
+
                 #         # Get attribute indentation (usually more indented than tag)
                 #         if len(lines) > 1:
                 #             second_line = lines[1]
@@ -432,11 +425,11 @@ class ChecksOdooModuleXML(BaseChecker):
                 #             indent_str = ' ' * attr_indent
                 #         else:
                 #             indent_str = ' ' * (base_indent + 8)  # Default 8 spaces
-                        
+
                 #         # Build new tag with id first, preserving multiline format
                 #         is_self_closing = match.group(1) == '/'
                 #         new_attrs_lines = [f'{k}="{v}"' for k, v in new_attrs.items()]
-                        
+
                 #         new_tag = f'<{record.tag}\n'
                 #         new_tag += f'\n'.join(f'{indent_str}{attr}' for attr in new_attrs_lines)
                 #         new_tag += f'{" /" if is_self_closing else ""}>'
@@ -445,7 +438,7 @@ class ChecksOdooModuleXML(BaseChecker):
                 #         is_self_closing = match.group(1) == '/'
                 #         attrs_str = ' '.join(f'{k}="{v}"' for k, v in new_attrs.items())
                 #         new_tag = f'<{record.tag} {attrs_str}{" /" if is_self_closing else ""}>'
-                    
+
                 #     # Replace in content
                 #     new_content = content.replace(old_tag, new_tag, 1)
                 #     utils.perform_fix(manifest_data["filename"], new_content.encode('UTF-8'))
@@ -453,7 +446,7 @@ class ChecksOdooModuleXML(BaseChecker):
                 #     # Fallback: try simple single-line replacement (original behavior)
                 #     old_tag = f"{record.tag} " + " ".join(f'{k}="{v}"' for k, v in attrs.items())
                 #     new_tag = f"{record.tag} " + " ".join(f'{k}="{v}"' for k, v in new_attrs.items())
-                    
+
                 #     if old_tag in content:
                 #         new_content = content.replace(old_tag, new_tag, 1)
                 #         utils.perform_fix(manifest_data["filename"], new_content.encode('UTF-8'))
