@@ -337,8 +337,7 @@ class ChecksOdooModuleXML(BaseChecker):
                 if during2 != during:
                     # Modify the record attrib to propagate the change to other checks
                     record.attrib["id"] = xmlid_name
-                    content = bef + during2 + aft
-                    utils.perform_fix(manifest_data["filename"], content)
+                    utils.perform_fix(manifest_data["filename"], bef + during2 + aft)
         
         first_attr = record.keys()[0]
         if first_attr != "id" and self.is_message_enabled("xml-id-position-first", manifest_data["disabled_checks"]):
@@ -359,8 +358,7 @@ class ChecksOdooModuleXML(BaseChecker):
                 # record.attrib.update(new_attrs)
                 
                 # Read the entire file
-                with open(manifest_data["filename"], "rb") as f_xml:
-                    content = f_xml.read().decode('UTF-8')
+                bef, during, aft = self._read_node(manifest_data["filename"], record)
 
                 
                 # Build regex pattern to match the tag with all its known attributes
@@ -393,17 +391,24 @@ class ChecksOdooModuleXML(BaseChecker):
                     rf'(?P<close_{record.tag}>\s*(/?)>)'         # Optional self-closing and closing >
                 )
                 
+                # if "menu_root" in record.attrib.get("id", ""):
+                #     import pdb;pdb.set_trace()
                 # Search with multiline and dotall flags
-                match = re.search(pattern, content, re.DOTALL | re.MULTILINE)
-                if "menu_root" in record.attrib.get("id", ""):
-                    import pdb;pdb.set_trace()
+                match = re.search(pattern, during.decode(), re.DOTALL | re.MULTILINE)
                 if match:
                     keys = [f"open_{record.tag}"] + keys + [f"close_{record.tag}"]
                     match_dict = match.groupdict()
                     recreate = ''.join(match_dict[k] for k in keys)
                     original = match.group()
-                    new_content = content.replace(original, recreate)
-                    utils.perform_fix(manifest_data["filename"], new_content.encode('UTF-8'))
+                    # import pdb;pdb.set_trace()
+                    during2 = during.replace(original.encode(), recreate.encode(), 1)
+                    if during2 != during:
+                        # Modify the record attrib to propagate the change to other checks
+                        id_value = attrs.pop("id")
+                        record.attrib.clear()
+                        new_attrs = {"id": id_value, **attrs}
+                        record.attrib.update(new_attrs)
+                        utils.perform_fix(manifest_data["filename"], bef + during2 + aft)
 
                 
                 # if match:
