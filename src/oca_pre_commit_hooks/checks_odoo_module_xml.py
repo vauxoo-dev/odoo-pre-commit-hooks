@@ -338,7 +338,7 @@ class ChecksOdooModuleXML(BaseChecker):
                     # Modify the record attrib to propagate the change to other checks
                     record.attrib["id"] = xmlid_name
                     utils.perform_fix(manifest_data["filename"], bef + during2 + aft)
-        
+
         first_attr = record.keys()[0]
         if first_attr != "id" and self.is_message_enabled("xml-id-position-first", manifest_data["disabled_checks"]):
             self.register_error(
