@@ -300,28 +300,20 @@ class ChecksOdooModuleXML(BaseChecker):
     @utils.only_required_for_checks("xml-redundant-module-name", "xml-id-position-first")
     def visit_xml_record(self, manifest_data, record):
         """* Check xml-redundant-module-name
-
         If the module is called "module_a" and the xmlid is
         `<record id="module_a.xmlid_name1" ...`
-
         The "module_a." is redundant it could be replaced to only
         `<record id="xmlid_name1" ...`
-
         * Check xml-id-position-first
-
         If the record id is not in the first position
         `<record ... id="xmlid_name1"`
-
         It should be the first
         `<record id="xmlid_name1" ...`
         """
         # redundant_module_name
-        # TODO: Process safe way using only one line
-        # TODO: Compatible with single quotes id='xmlid' instead of id="xmlid"
         record_id = record.get("id")
         if not record_id:
             return
-
         xmlid_module, xmlid_name = record_id.split(".") if "." in record_id else ["", record_id]
         if xmlid_module == self.module_name and self.is_message_enabled(
             "xml-redundant-module-name", manifest_data["disabled_checks"]
@@ -336,12 +328,16 @@ class ChecksOdooModuleXML(BaseChecker):
             if self.autofix:
                 # Modify the record attrib to propagate the change to other checks
                 record.attrib["id"] = xmlid_name
-                bef, during, aft = self._read_node(manifest_data["filename"], record)
-                during2 = during.replace(f' id="{record_id}"'.encode(), f' id="{xmlid_name}"'.encode(), 1)
-                if during2 != during:
-                    content = bef + during2 + aft
-                    utils.perform_fix(manifest_data["filename"], content)
-
+                content = b""
+                with open(manifest_data["filename"], "rb") as f_xml:
+                    for no_line, line in enumerate(f_xml, start=1):
+                        if no_line == record.sourceline:
+                            # TODO: Use regex?
+                            line = line.replace(f' id="{record_id}" '.encode(), f' id="{xmlid_name}" '.encode())
+                            line = line.replace(f" id='{record_id}' ".encode(), f" id='{xmlid_name}' ".encode())
+                        content += line
+                utils.perform_fix(manifest_data["filename"], content)
+        
         first_attr = record.keys()[0]
         if first_attr != "id" and self.is_message_enabled("xml-id-position-first", manifest_data["disabled_checks"]):
             self.register_error(
@@ -353,37 +349,93 @@ class ChecksOdooModuleXML(BaseChecker):
             )
             if self.autofix:
                 attrs = dict(record.attrib)
-                old_tag = f"{record.tag} " + " ".join(f'{k}="{v}"' for k, v in attrs.items())
-                new_attrs = {"id": attrs.pop("id"), **attrs}
-                new_tag = f"{record.tag} " + " ".join(f'{k}="{v}"' for k, v in new_attrs.items())
-
-                bef, during, aft = self._read_node(manifest_data["filename"], record)
-                spaces_dict = {}
-                old_tag = ""
-                for attrib in record.attrib:
-                    res = re.search(
-                        rf'(?P<{attrib}>\s+){attrib}\s*=\s*"'.encode(), during, flags=re.MULTILINE | re.DOTALL
-                    )
-                    spaces_dict[attrib] = res.group(attrib) if res else b" "
-                    old_tag += f'{spaces_dict[attrib].decode("UTF-8")}{attrib}="{new_attrs[attrib]}"'
-
-                first_attr_spaces = spaces_dict[first_attr]
-                spaces_dict[first_attr] = spaces_dict["id"]
-                spaces_dict["id"] = first_attr_spaces
-                new_tag = ""
-                for attr in new_attrs:
-                    new_tag += f'{spaces_dict[attr].decode("UTF-8")}{attr}="{new_attrs[attr]}"'
-
-                during2 = during.replace(old_tag.encode(), new_tag.encode(), 1)
-                if during2 != during:
-
-                    # Update the record attrib to propagate the change to other checks
-                    record.attrib.clear()
-                    record.attrib.update(new_attrs)
-
-                    # during = during.replace(f' id="{record_id}"'.encode(), f' id="{xmlid_name}"'.encode(), 1)
-                    content = bef + during2 + aft
-                    utils.perform_fix(manifest_data["filename"], content)
+                # id_value = attrs.pop("id")
+                # new_attrs = {"id": id_value, **attrs}
+                
+                # Update the record attrib to propagate the change to other checks
+                # record.attrib.clear()
+                # record.attrib.update(new_attrs)
+                
+                # Read the entire file
+                with open(manifest_data["filename"], "rb") as f_xml:
+                    content = f_xml.read().decode('UTF-8')
+                
+                # Build regex pattern to match the tag with all its known attributes
+                # sourceline is the last line of the last attribute, so we need to search backwards
+                tag_name = re.escape(record.tag)
+                
+                # Create a pattern that matches all known attributes in any order
+                # Each attribute: attrname="attrvalue" with optional whitespace
+                attr_patterns = []
+                for attr_name, attr_value in attrs.items():
+                    escaped_name = re.escape(attr_name)
+                    escaped_value = re.escape(attr_value)
+                    # Match attribute with flexible whitespace and quotes
+                    # TODO: Get the spaces before of the attribute name
+                    attr_patterns.append(
+                        rf'(?P<{attr_name}>{escaped_name}\s*=\s*(?P<quote_{attr_name}>["\'])({escaped_value})(?P=quote_{attr_name}))'
+                    )                
+                # Pattern for the complete opening tag
+                # <tag_name whitespace attr1 whitespace attr2 ... whitespace>
+                # Using DOTALL to match across lines
+                attrs_regex = r'\s+'.join(attr_patterns)
+                pattern = (
+                    rf'<{tag_name}\s+'  # Opening tag with space
+                    rf'{attrs_regex}'    # All attributes with whitespace between them
+                    rf'\s*(/?)>'         # Optional self-closing and closing >
+                )
+                
+                # Search with multiline and dotall flags
+                if "menu_root" in record.attrib.get("id", ""):
+                    import pdb;pdb.set_trace()
+                match = re.search(pattern, content, re.DOTALL | re.MULTILINE)
+                
+                # if match:
+                #     # Found the tag, now reconstruct it with id first
+                #     old_tag = match.group(0)
+                    
+                #     # Determine if this is multiline by checking for newlines
+                #     is_multiline = '\n' in old_tag
+                    
+                #     if is_multiline:
+                #         # Extract indentation from the original tag
+                #         lines = old_tag.split('\n')
+                #         # Get base indentation from the first line (tag name line)
+                #         first_line = lines[0]
+                #         base_indent = len(first_line) - len(first_line.lstrip())
+                        
+                #         # Get attribute indentation (usually more indented than tag)
+                #         if len(lines) > 1:
+                #             second_line = lines[1]
+                #             attr_indent = len(second_line) - len(second_line.lstrip())
+                #             indent_str = ' ' * attr_indent
+                #         else:
+                #             indent_str = ' ' * (base_indent + 8)  # Default 8 spaces
+                        
+                #         # Build new tag with id first, preserving multiline format
+                #         is_self_closing = match.group(1) == '/'
+                #         new_attrs_lines = [f'{k}="{v}"' for k, v in new_attrs.items()]
+                        
+                #         new_tag = f'<{record.tag}\n'
+                #         new_tag += f'\n'.join(f'{indent_str}{attr}' for attr in new_attrs_lines)
+                #         new_tag += f'{" /" if is_self_closing else ""}>'
+                #     else:
+                #         # Single line: simple reconstruction
+                #         is_self_closing = match.group(1) == '/'
+                #         attrs_str = ' '.join(f'{k}="{v}"' for k, v in new_attrs.items())
+                #         new_tag = f'<{record.tag} {attrs_str}{" /" if is_self_closing else ""}>'
+                    
+                #     # Replace in content
+                #     new_content = content.replace(old_tag, new_tag, 1)
+                #     utils.perform_fix(manifest_data["filename"], new_content.encode('UTF-8'))
+                # else:
+                #     # Fallback: try simple single-line replacement (original behavior)
+                #     old_tag = f"{record.tag} " + " ".join(f'{k}="{v}"' for k, v in attrs.items())
+                #     new_tag = f"{record.tag} " + " ".join(f'{k}="{v}"' for k, v in new_attrs.items())
+                    
+                #     if old_tag in content:
+                #         new_content = content.replace(old_tag, new_tag, 1)
+                #         utils.perform_fix(manifest_data["filename"], new_content.encode('UTF-8'))
 
     @utils.only_required_for_checks("xml-view-dangerous-replace-low-priority", "xml-deprecated-tree-attribute")
     def visit_xml_record_view(self, manifest_data, record):

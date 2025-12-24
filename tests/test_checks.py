@@ -144,7 +144,7 @@ class TestChecks(common.ChecksCommon):
             "The XML wrong xmlid order was previously fixed",
         )
         self.assertIn(
-            b'<menuitem name="Root" id="broken_module.menu_root" />',
+            b"<menuitem name=\"Root\" id='broken_module.menu_root' />",
             content,
             "The XML wrong xmlid order and redundant module name was previously fixed",
         )
@@ -182,7 +182,7 @@ class TestChecks(common.ChecksCommon):
             "The XML wrong xmlid order and redundant module name was not fixed",
         )
         self.assertIn(
-            b'<menuitem\n        id="menu_root2"\n        name="Root 2"',
+            b"<menuitem\n        id='menu_root2'\n        name=\"Root 2\"",
             content,
             "The XML wrong xmlid order multiline and redundant module name was not fixed",
         )
