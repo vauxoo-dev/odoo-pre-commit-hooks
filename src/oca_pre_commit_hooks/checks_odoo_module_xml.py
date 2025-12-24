@@ -371,7 +371,7 @@ class ChecksOdooModuleXML(BaseChecker):
                 # Create a pattern that matches all known attributes in any order
                 # Each attribute: attrname="attrvalue" with optional whitespace
                 attr_patterns = []
-                keys = []
+                keys = [f"spaces_before_id", "id"]
                 for attr_name, attr_value in attrs.items():
                     escaped_name = re.escape(attr_name)
                     escaped_value = re.escape(attr_value)
@@ -380,6 +380,8 @@ class ChecksOdooModuleXML(BaseChecker):
                     attr_patterns.append(
                         rf'(?P<spaces_before_{attr_name}>\s*)(?P<{attr_name}>{escaped_name}\s*=\s*(?P<quote_{attr_name}>["\'])({escaped_value})(?P=quote_{attr_name}))'
                     )
+                    if attr_name == "id":
+                        continue
                     keys.extend([f"spaces_before_{attr_name}", attr_name])
                 # TODO: oneline repalce simple
                 # Pattern for the complete opening tag
@@ -400,6 +402,10 @@ class ChecksOdooModuleXML(BaseChecker):
                     keys = [f"open_{record.tag}"] + keys + [f"close_{record.tag}"]
                     match_dict = match.groupdict()
                     recreate = ''.join(match_dict[k] for k in keys)
+                    original = match.group()
+                    new_content = content.replace(original, recreate)
+                    utils.perform_fix(manifest_data["filename"], new_content.encode('UTF-8'))
+
                 
                 # if match:
                 #     # Found the tag, now reconstruct it with id first
