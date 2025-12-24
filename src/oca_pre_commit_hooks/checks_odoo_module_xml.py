@@ -326,15 +326,18 @@ class ChecksOdooModuleXML(BaseChecker):
                 line=record.sourceline,
             )
             if self.autofix:
-                # Modify the record attrib to propagate the change to other checks
-                record.attrib["id"] = xmlid_name
                 content = b""
                 with open(manifest_data["filename"], "rb") as f_xml:
                     for no_line, line in enumerate(f_xml, start=1):
                         if no_line == record.sourceline:
-                            # TODO: Use regex?
-                            line = line.replace(f' id="{record_id}" '.encode(), f' id="{xmlid_name}" '.encode())
-                            line = line.replace(f" id='{record_id}' ".encode(), f" id='{xmlid_name}' ".encode())
+                            # TODO: Use regex
+                            # TODO: compatible with multiline attributes
+                            line2 = line.replace(f' id="{record_id}" '.encode(), f' id="{xmlid_name}" '.encode())
+                            line2 = line.replace(f" id='{record_id}' ".encode(), f" id='{xmlid_name}' ".encode())
+                            if line2 != line:
+                                # Modify the record attrib to propagate the change to other checks
+                                record.attrib["id"] = xmlid_name
+                                content += line2
                         content += line
                 utils.perform_fix(manifest_data["filename"], content)
         
@@ -359,6 +362,7 @@ class ChecksOdooModuleXML(BaseChecker):
                 # Read the entire file
                 with open(manifest_data["filename"], "rb") as f_xml:
                     content = f_xml.read().decode('UTF-8')
+
                 
                 # Build regex pattern to match the tag with all its known attributes
                 # sourceline is the last line of the last attribute, so we need to search backwards
@@ -367,28 +371,35 @@ class ChecksOdooModuleXML(BaseChecker):
                 # Create a pattern that matches all known attributes in any order
                 # Each attribute: attrname="attrvalue" with optional whitespace
                 attr_patterns = []
+                keys = []
                 for attr_name, attr_value in attrs.items():
                     escaped_name = re.escape(attr_name)
                     escaped_value = re.escape(attr_value)
                     # Match attribute with flexible whitespace and quotes
                     # TODO: Get the spaces before of the attribute name
                     attr_patterns.append(
-                        rf'(?P<{attr_name}>{escaped_name}\s*=\s*(?P<quote_{attr_name}>["\'])({escaped_value})(?P=quote_{attr_name}))'
-                    )                
+                        rf'(?P<spaces_before_{attr_name}>\s*)(?P<{attr_name}>{escaped_name}\s*=\s*(?P<quote_{attr_name}>["\'])({escaped_value})(?P=quote_{attr_name}))'
+                    )
+                    keys.extend([f"spaces_before_{attr_name}", attr_name])
+                # TODO: oneline repalce simple
                 # Pattern for the complete opening tag
                 # <tag_name whitespace attr1 whitespace attr2 ... whitespace>
                 # Using DOTALL to match across lines
-                attrs_regex = r'\s+'.join(attr_patterns)
+                attrs_regex = r''.join(attr_patterns)
                 pattern = (
-                    rf'<{tag_name}\s+'  # Opening tag with space
+                    rf'(?P<open_{record.tag}><{tag_name})'  # Opening tag with space
                     rf'{attrs_regex}'    # All attributes with whitespace between them
-                    rf'\s*(/?)>'         # Optional self-closing and closing >
+                    rf'(?P<close_{record.tag}>\s*(/?)>)'         # Optional self-closing and closing >
                 )
                 
                 # Search with multiline and dotall flags
+                match = re.search(pattern, content, re.DOTALL | re.MULTILINE)
                 if "menu_root" in record.attrib.get("id", ""):
                     import pdb;pdb.set_trace()
-                match = re.search(pattern, content, re.DOTALL | re.MULTILINE)
+                if match:
+                    keys = [f"open_{record.tag}"] + keys + [f"close_{record.tag}"]
+                    match_dict = match.groupdict()
+                    recreate = ''.join(match_dict[k] for k in keys)
                 
                 # if match:
                 #     # Found the tag, now reconstruct it with id first
