@@ -111,6 +111,7 @@ class ChecksCommon(unittest.TestCase):
             if name.startswith("_test_checks_disable_one_by_one") and callable(getattr(self, name))
         ]
         file_paths = self.file_paths
+        # TODO: file_paths gets only __manifest__.py files so it is not raising the checks related with py files fixit
         dir_paths = [os.path.dirname(i) for i in self.file_paths]
         for check2disable in self.expected_errors:
             os.environ.pop(ENABLE_ENV_VAR, None)

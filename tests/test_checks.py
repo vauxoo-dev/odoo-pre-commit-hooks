@@ -61,12 +61,16 @@ class TestChecks(common.ChecksCommon):
         self.file_paths = glob.glob(os.path.join(self.test_repo_path, "*", "__openerp__.py")) + glob.glob(
             os.path.join(self.test_repo_path, "*", "__manifest__.py")
         )
-        self.checks_cli_main = oca_pre_commit_hooks.cli.main
         self.expected_errors = EXPECTED_ERRORS.copy()
 
     def checks_run(self, *args, **kwargs):
         result = oca_pre_commit_hooks.checks_odoo_module.run(*args, **kwargs)
         result += oca_pre_commit_hooks.checks_odoo_module_fixit.run(*args, **kwargs)
+        return result
+
+    def checks_cli_main(self, *args, **kwargs):
+        result = oca_pre_commit_hooks.cli.main(*args, **kwargs)
+        oca_pre_commit_hooks.cli_fixit.main(*args, **kwargs)
         return result
 
     @unittest.skipIf(not os.environ.get("BUILD_README"), "BUILD_README environment variable not enabled")
