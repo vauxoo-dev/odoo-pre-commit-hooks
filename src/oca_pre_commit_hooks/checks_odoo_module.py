@@ -14,7 +14,7 @@ from fixit.api import fixit_paths
 from fixit.config import collect_rules, parse_rule
 from fixit.ftypes import Config, Options
 
-from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_xml, utils, checks_odoo_module_fixit
+from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_fixit, checks_odoo_module_xml, utils
 from oca_pre_commit_hooks.base_checker import BaseChecker
 
 colorama_init(autoreset=True)
@@ -416,7 +416,12 @@ def lookup_manifest_paths(filenames_or_modules):
 def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=False, list_msgs=False, autofix=False):
     if list_msgs:
         _, checks_docstring = utils.get_checks_docstring(
-            [ChecksOdooModule, checks_odoo_module_csv.ChecksOdooModuleCSV, checks_odoo_module_xml.ChecksOdooModuleXML, checks_odoo_module_fixit.ChecksOdooModuleFixit]
+            [
+                ChecksOdooModule,
+                checks_odoo_module_csv.ChecksOdooModuleCSV,
+                checks_odoo_module_xml.ChecksOdooModuleXML,
+                checks_odoo_module_fixit.ChecksOdooModuleFixit,
+            ]
         )
         if not no_verbose:
             print("Emittable messages with the current interpreter:", end="")
