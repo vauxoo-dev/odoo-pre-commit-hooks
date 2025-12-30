@@ -251,10 +251,10 @@ class ChecksOdooModuleFixit(BaseChecker):
         Except valid comments e.g. pylint, flake8, shebang or comments in the middle (not header)
         """
         if self.is_message_enabled("use-header-comments"):
-            self._remove_header_comments(Path(self.manifest_path))
+            self._remove_header_comments([Path(f_path) for f_path in self.changed])
 
-    def _remove_header_comments(self, manifest_path):
-        for pyfile in manifest_path.parent.rglob("*.py"):
+    def _remove_header_comments(self, pyfiles):
+        for pyfile in pyfiles:
             with pyfile.open("r") as f_py:
                 content = ""
                 needs_fix = False
