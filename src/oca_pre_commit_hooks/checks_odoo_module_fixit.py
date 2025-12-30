@@ -204,24 +204,24 @@ class ChecksOdooModuleFixit(BaseChecker):
             if not (lint_rules_enabled_all or lint_rules_enabled_manifest):
                 return
             results = []
-            if lint_rules_enabled_manifest:
+            if lint_rules_enabled_manifest and {self.manifest_path} & self.changed:
                 manifest_options = Options(debug=False, output_format="vscode", rules=lint_rules_enabled_manifest)
                 results.append(
                     fixit_paths(
                         paths=[Path(self.manifest_path)],
                         options=manifest_options,
                         autofix=self.autofix,
-                        parallel=False,
+                        parallel=True,
                     )
                 )
-            if lint_rules_enabled_all:
+            if lint_rules_enabled_all and self.changed - {self.manifest_path}:
                 all_options = Options(debug=False, output_format="vscode", rules=lint_rules_enabled_all)
                 results.append(
                     fixit_paths(
-                        paths=[Path(self.odoo_addon_path)],
+                        paths=[Path(f_path) for f_path in self.changed - {self.manifest_path}],
                         options=all_options,
                         autofix=self.autofix,
-                        parallel=False,
+                        parallel=True,
                     )
                 )
             for result in chain.from_iterable(results):
