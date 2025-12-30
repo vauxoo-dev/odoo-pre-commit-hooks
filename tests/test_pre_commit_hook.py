@@ -48,8 +48,9 @@ repos:
 
     def test_checks_hook_odoo_module(self):
         self.expected_errors = test_checks.EXPECTED_ERRORS.copy()
-        self.pre_commit_cmd.append("oca-checks-odoo-module")
-        returncode, output, cmd_str = run_cmd(self.pre_commit_cmd)
+        returncode, output, cmd_str = run_cmd(self.pre_commit_cmd + ["oca-checks-odoo-module"])
+        returncode2, output2, cmd_str2 = run_cmd(self.pre_commit_cmd + ["oca-checks-odoo-module-fixit"])
+        output += output2
         self.assertTrue(returncode, f"The process exited with code zero {returncode} {output}")
         errors_count = {code: output.count(f": {code} ") for code in self.expected_errors}
         common.assertDictEqual(
