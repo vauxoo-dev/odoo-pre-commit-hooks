@@ -312,6 +312,15 @@ def lookup_manifest_paths(filenames_or_modules):
 
 
 def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=False, list_msgs=False, autofix=False):
+    if list_msgs:
+        _, checks_docstring = utils.get_checks_docstring([ChecksOdooModuleFixit])
+        if not no_verbose:
+            print("Emittable messages with the current interpreter:", end="")
+            print(checks_docstring)
+        if no_exit:
+            return checks_docstring
+        sys.exit(0)
+
     all_check_errors = []
     # TODO: Add unnitest to check files filtered from pre-commit by hook
     # Uncommet to check what files sent pre-commit

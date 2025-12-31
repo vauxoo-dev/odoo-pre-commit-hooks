@@ -282,7 +282,6 @@ def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=F
                 ChecksOdooModule,
                 checks_odoo_module_csv.ChecksOdooModuleCSV,
                 checks_odoo_module_xml.ChecksOdooModuleXML,
-                checks_odoo_module_fixit.ChecksOdooModuleFixit,
             ]
         )
         if not no_verbose:
