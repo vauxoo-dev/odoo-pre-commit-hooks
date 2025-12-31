@@ -70,8 +70,8 @@ class TestChecks(common.ChecksCommon):
 
     def checks_cli_main(self, *args, **kwargs):
         result = oca_pre_commit_hooks.cli.main(*args, **kwargs)
-        oca_pre_commit_hooks.cli_fixit.main(*args, **kwargs)
-        return result
+        result2 = oca_pre_commit_hooks.cli_fixit.main(*args, **kwargs)
+        return result + result2
 
     @unittest.skipIf(not os.environ.get("BUILD_README"), "BUILD_README environment variable not enabled")
     def test_build_docstring(self):
