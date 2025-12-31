@@ -193,14 +193,13 @@ class ChecksOdooModuleFixit(BaseChecker):
             changed |= {curr_path}
         manifest_path = Path(self.manifest_path)
         if changed == {manifest_path}:
-            # Compatible with current way using only the manifest file for the whole module
+            # Compatible with current way using only the manifest file for the whole module
             # TODO: Use file by file to use jobs in pre-commit
             changed = {manifest_path.parent}
         if {manifest_path.parent} & changed:
             # Manifest is not imported from __init__.py so it is included manually
             changed |= {manifest_path}
         return changed
-
 
     @utils.only_required_for_installable()
     def check_py_fixit(self):
