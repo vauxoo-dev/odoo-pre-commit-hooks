@@ -253,8 +253,18 @@ class ChecksOdooModuleFixit(BaseChecker):
         if self.is_message_enabled("use-header-comments"):
             self._remove_header_comments([Path(f_path) for f_path in self.changed])
 
-    def _remove_header_comments(self, pyfiles):
-        for pyfile in pyfiles:
+    def _get_files(self, directories_or_files, ext):
+        new_files = set()
+        for directory_or_file in directories_or_files:
+            if directory_or_file.is_dir():
+                new_files |= set(f for f in directory_or_file.rglob(ext))
+            elif directory_or_file.is_file():
+                new_files |= {directory_or_file}
+        print(new_files)
+        return new_files
+
+    def _remove_header_comments(self, directories_or_files):
+        for pyfile in self._get_files(directories_or_files, "*.py"):
             with pyfile.open("r") as f_py:
                 content = ""
                 needs_fix = False
