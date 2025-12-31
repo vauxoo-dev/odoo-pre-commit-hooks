@@ -222,7 +222,7 @@ class ChecksOdooModuleFixit(BaseChecker):
                         paths=[manifest_path],
                         options=manifest_options,
                         autofix=self.autofix,
-                        parallel=True,
+                        parallel=False,
                     )
                 )
             if lint_rules_enabled_all and self.changed:
@@ -232,7 +232,7 @@ class ChecksOdooModuleFixit(BaseChecker):
                         paths=changed,
                         options=all_options,
                         autofix=self.autofix,
-                        parallel=True,
+                        parallel=False,
                     )
                 )
             for result in chain.from_iterable(results):
