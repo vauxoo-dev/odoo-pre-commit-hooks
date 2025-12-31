@@ -185,6 +185,23 @@ class ChecksOdooModuleFixit(BaseChecker):
         lint_rules = self._get_fixit_rules(manifest_rule)
         return [lint_rule for lint_rule, lint_rule_name in lint_rules if self.is_message_enabled(lint_rule_name)]
 
+    def _get_changed(self):
+        """Return files to process if manifest is the unique file so it returns the directory of the module"""
+        changed = set()
+        for f_path in self.changed:
+            curr_path = Path(f_path)
+            changed |= {curr_path}
+        manifest_path = Path(self.manifest_path)
+        if changed == {manifest_path}:
+            # Compatible with current way using only the manifest file for the whole module
+            # TODO: Use file by file to use jobs in pre-commit
+            changed = {manifest_path.parent}
+        if {manifest_path.parent} & changed:
+            # Manifest is not imported from __init__.py so it is included manually
+            changed |= {manifest_path}
+        return changed
+
+
     @utils.only_required_for_installable()
     def check_py_fixit(self):
         """Run fixit"""
@@ -204,17 +221,8 @@ class ChecksOdooModuleFixit(BaseChecker):
             if not (lint_rules_enabled_all or lint_rules_enabled_manifest):
                 return
             results = []
-            # manifest_path =
-            # TOOD: check if posix or str works in windows or using Path for self.changed
-            changed = set()
-            for f_path in self.changed:
-                curr_path = Path(f_path)
-                changed |= {curr_path}
+            changed = self._get_changed()
             manifest_path = Path(self.manifest_path)
-            if manifest_path.parent in changed:
-                # Manifest is not imported from __init__.py so it is included manually
-                changed |= {manifest_path}
-
             if lint_rules_enabled_manifest and {manifest_path} & changed:
                 manifest_options = Options(debug=False, output_format="vscode", rules=lint_rules_enabled_manifest)
                 results.append(
@@ -262,7 +270,8 @@ class ChecksOdooModuleFixit(BaseChecker):
         Except valid comments e.g. pylint, flake8, shebang or comments in the middle (not header)
         """
         if self.is_message_enabled("use-header-comments"):
-            self._remove_header_comments([Path(f_path) for f_path in self.changed])
+            changed = self._get_changed()
+            self._remove_header_comments(changed)
 
     def _get_files(self, directories_or_files, ext):
         new_files = set()
