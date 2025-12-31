@@ -204,21 +204,32 @@ class ChecksOdooModuleFixit(BaseChecker):
             if not (lint_rules_enabled_all or lint_rules_enabled_manifest):
                 return
             results = []
-            if lint_rules_enabled_manifest and {self.manifest_path} & self.changed:
+            # manifest_path =
+            # TOOD: check if posix or str works in windows or using Path for self.changed
+            changed = set()
+            for f_path in self.changed:
+                curr_path = Path(f_path)
+                changed |= {curr_path}
+            manifest_path = Path(self.manifest_path)
+            if manifest_path.parent in changed:
+                # Manifest is not imported from __init__.py so it is included manually
+                changed |= {manifest_path}
+
+            if lint_rules_enabled_manifest and {manifest_path} & changed:
                 manifest_options = Options(debug=False, output_format="vscode", rules=lint_rules_enabled_manifest)
                 results.append(
                     fixit_paths(
-                        paths=[Path(self.manifest_path)],
+                        paths=[manifest_path],
                         options=manifest_options,
                         autofix=self.autofix,
                         parallel=True,
                     )
                 )
-            if lint_rules_enabled_all and self.changed - {self.manifest_path}:
+            if lint_rules_enabled_all and self.changed:
                 all_options = Options(debug=False, output_format="vscode", rules=lint_rules_enabled_all)
                 results.append(
                     fixit_paths(
-                        paths=[Path(f_path) for f_path in self.changed - {self.manifest_path}],
+                        paths=changed,
                         options=all_options,
                         autofix=self.autofix,
                         parallel=True,
@@ -257,10 +268,9 @@ class ChecksOdooModuleFixit(BaseChecker):
         new_files = set()
         for directory_or_file in directories_or_files:
             if directory_or_file.is_dir():
-                new_files |= set(f for f in directory_or_file.rglob(ext))
+                new_files |= {f for f in directory_or_file.rglob(ext)}
             elif directory_or_file.is_file():
                 new_files |= {directory_or_file}
-        print(new_files)
         return new_files
 
     def _remove_header_comments(self, directories_or_files):

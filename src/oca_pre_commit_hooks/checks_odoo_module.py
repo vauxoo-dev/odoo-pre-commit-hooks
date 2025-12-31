@@ -9,7 +9,7 @@ from pathlib import Path
 
 from colorama import init as colorama_init
 
-from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_fixit, checks_odoo_module_xml, utils
+from oca_pre_commit_hooks import checks_odoo_module_csv, checks_odoo_module_xml, utils
 from oca_pre_commit_hooks.base_checker import BaseChecker
 
 colorama_init(autoreset=True)
