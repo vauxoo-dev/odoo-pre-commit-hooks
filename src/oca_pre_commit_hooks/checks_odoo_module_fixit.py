@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import ast
+import glob
 import os
 import sys
 from collections import defaultdict
@@ -7,18 +8,47 @@ from functools import lru_cache
 from itertools import chain
 from pathlib import Path
 
+from colorama import init as colorama_init
 from fixit.api import fixit_paths
-from fixit.config import collect_rules, parse_rule
+from fixit.config import collect_rules
 from fixit.ftypes import Config, Options
 
 from oca_pre_commit_hooks import utils
 from oca_pre_commit_hooks.base_checker import BaseChecker
 
+colorama_init(autoreset=True)
+
+DFTL_README_TMPL_URL = "https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"  # noqa: B950
+DFTL_README_FILES = ["README.md", "README.txt", "README.rst"]
+DFTL_MANIFEST_DATA_KEYS = ["data", "demo", "demo_xml", "init_xml", "qweb", "test", "update_xml"]
 MANIFEST_NAMES = ("__openerp__.py", "__manifest__.py")
+MANIFEST_DATA_DIRS = [
+    "data",
+    "datas",
+    "demo",
+    "demos",
+    "report",
+    "reports",
+    "security",
+    "template",
+    "templates",
+    "view",
+    "views",
+    "wizard",
+    "wizards",
+]
+MANIFEST_DATA_EXTS = [
+    ".csv",
+    ".xml",
+]
+DATA_MANUAL_KEY = "oca_data_manual"
+BLUE_PILL = "\033[94m🔵\033[0m"
+RED_PILL = "\033[91m🔴\033[0m"
 
 
 class ChecksOdooModuleFixit(BaseChecker):
-    def __init__(self, manifest_path, enable, disable, changed=None, verbose=True, autofix=False):
+    # def __init__(self, manifest_path, enable, disable, changed=None, verbose=True, autofix=False):
+    def __init__(self, files_or_directories, enable, disable, verbose=True, autofix=False)
         super().__init__(enable, disable, autofix=autofix, module_version=utils.manifest_version(manifest_path))
         if not os.path.isfile(manifest_path) or os.path.basename(manifest_path) not in MANIFEST_NAMES:
             raise UserWarning(  # pragma: no cover
@@ -55,11 +85,11 @@ class ChecksOdooModuleFixit(BaseChecker):
     @staticmethod
     @lru_cache(maxsize=32)
     def _get_fixit_rules(manifest_rule):
-        rule = parse_rule(".checks_odoo_module_fixit_rules", Path(os.path.dirname(os.path.abspath(__file__))))
+        rule = utils._fixit_parse_rule(".checks_odoo_module_fixit_rules", Path(os.path.dirname(os.path.abspath(__file__))))
         lint_rules = collect_rules(Config(enable=[rule], disable=[], python_version=None))
         return [
             (
-                parse_rule(
+                utils._fixit_parse_rule(
                     f"{lint_rule.__module__.replace('fixit.local', '')}",
                     Path(os.path.dirname(os.path.abspath(__file__))),
                 ),
@@ -112,7 +142,7 @@ class ChecksOdooModuleFixit(BaseChecker):
             lint_rules_enabled_manifest = self._get_fixit_enabled_rules(manifest_rule=True)
             if not (lint_rules_enabled_all or lint_rules_enabled_manifest):
                 return
-            results = []
+            x = []
             changed = self._get_changed()
             manifest_path = Path(self.manifest_path)
             if lint_rules_enabled_manifest and {manifest_path} & changed:
@@ -122,7 +152,7 @@ class ChecksOdooModuleFixit(BaseChecker):
                         paths=[manifest_path],
                         options=manifest_options,
                         autofix=self.autofix,
-                        parallel=not self.autofix,  # Fixit parallel is not compatible with autofix
+                        parallel=False,
                     )
                 )
             if lint_rules_enabled_all and self.changed:
@@ -132,7 +162,7 @@ class ChecksOdooModuleFixit(BaseChecker):
                         paths=changed,
                         options=all_options,
                         autofix=self.autofix,
-                        parallel=not self.autofix,  # Fixit parallel is not compatible with autofix
+                        parallel=False,
                     )
                 )
             for result in chain.from_iterable(results):
@@ -169,8 +199,7 @@ class ChecksOdooModuleFixit(BaseChecker):
         new_files = set()
         for directory_or_file in directories_or_files:
             if directory_or_file.is_dir():
-                # black compatibility
-                new_files |= {f for f in directory_or_file.rglob(ext)}  # pylint:disable=unnecessary-comprehension
+                new_files |= {f for f in directory_or_file.rglob(ext)}
             elif directory_or_file.is_file():
                 new_files |= {directory_or_file}
         return new_files
@@ -234,7 +263,6 @@ def lookup_manifest_paths(filenames_or_modules):
 
 
 def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=False, list_msgs=False, autofix=False):
-    # pylint: disable=duplicate-code
     if list_msgs:
         _, checks_docstring = utils.get_checks_docstring([ChecksOdooModuleFixit])
         if not no_verbose:
@@ -253,17 +281,15 @@ def run(files_or_modules, enable=None, disable=None, no_verbose=False, no_exit=F
     if disable is None:
         disable = set()
     exit_status = 0
-    for manifest_path, changed in lookup_manifest_paths(files_or_modules).items():
-        if not manifest_path:
-            continue
-        checks_obj = ChecksOdooModuleFixit(
-            os.path.realpath(manifest_path), enable, disable, changed=changed, verbose=not no_verbose, autofix=autofix
-        )
-        for check in utils.getattr_checks(checks_obj):
-            check()
-        if checks_obj.checks_errors:
-            all_check_errors.extend(checks_obj.checks_errors)
-            exit_status = 1
+    import pdb;pdb.set_trace()
+    checks_obj = ChecksOdooModuleFixit(
+        files_or_modules, enable, disable, verbose=not no_verbose, autofix=autofix
+    )
+    for check in utils.getattr_checks(checks_obj):
+        check()
+    if checks_obj.checks_errors:
+        all_check_errors.extend(checks_obj.checks_errors)
+        exit_status = 1
     # Sort errors by filepath, line, column and code
     all_check_errors.sort()
     # Print errors

@@ -161,6 +161,24 @@ class TestModel(http.Controller):
         ))
     """,
         ),
+        InvalidTestCase(
+            code="""
+    from odoo import models, _lt
+
+
+    class TestModel(models.Model):
+        def my_method(self):
+            _lt("old translated")
+    """,
+            expected_replacement="""
+    from odoo import models, _lt
+
+
+    class TestModel(models.Model):
+        def my_method(self):
+            self.env._("old translated")
+    """,
+        ),
     ]
 
     def __init__(self) -> None:
