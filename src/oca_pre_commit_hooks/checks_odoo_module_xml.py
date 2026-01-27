@@ -885,13 +885,16 @@ class ChecksOdooModuleXML(BaseChecker):
                     message=f"Deprecated QWeb directive `{', '.join(node_attrs_deprecated)}`. Use `t-out` instead",
                     filepath=manifest_data["filename_short"],
                     line=node.sourceline,
-                )
+                )   
                 if self.autofix and "t-out" not in node_attrs:
                     # TODO: add autofix test
                     # if t-out already exists, skip autofix
                     attr_deprecated = next(iter(node_attrs_deprecated))
                     value_deprecated = node.attrib.get(attr_deprecated)
                     node_content = node_xml.NodeContent(manifest_data["filename"], node)
+                    if "15.xml" in manifest_data["filename_short"] and node.tag == "t" and node.sourceline >=19:
+                        print(node_content.content_node)
+                        import pdb;pdb.set_trace()
                     pattern = rb"(?P<prefix>\b)" + re.escape(attr_deprecated).encode() + rb'(?P<suffix>\s*=\s*["\'])'
                     content_node2 = re.sub(pattern, rb"\g<prefix>t-out\g<suffix>", node_content.content_node, count=1)
                     if content_node2 != node_content.content_node:
