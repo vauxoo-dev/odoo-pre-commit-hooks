@@ -14,7 +14,10 @@
 - id: oca-checks-odoo-module-fixit
   name: Checks for py files of Odoo modules with fixit
   description: Multiple checks for Odoo modules with autofixes
-  entry: oca-checks-odoo-module-fixit
+  # --no-expand-manifest: pre-commit passes exactly the changed files, so a chunk
+  # containing only the manifest must not re-scan the whole module (another concurrent
+  # chunked invocation may already be processing the sibling files)
+  entry: oca-checks-odoo-module-fixit --no-expand-manifest
   args: []
   language: python
   types_or: ["python"]

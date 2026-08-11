@@ -3,6 +3,7 @@ import ast
 import os
 import sys
 from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor
 from functools import lru_cache
 from itertools import chain
 from pathlib import Path
@@ -18,8 +19,18 @@ MANIFEST_NAMES = ("__openerp__.py", "__manifest__.py")
 
 
 class ChecksOdooModuleFixit(BaseChecker):
-    def __init__(self, manifest_path, enable, disable, changed=None, verbose=True, autofix=False):
+    def __init__(
+        self,
+        manifest_path,
+        enable,
+        disable,
+        changed=None,
+        verbose=True,
+        autofix=False,
+        expand_manifest=True,
+    ):
         super().__init__(enable, disable, autofix=autofix, module_version=utils.manifest_version(manifest_path))
+        self.expand_manifest = expand_manifest
         manifest_path_obj = Path(manifest_path)
         if not manifest_path_obj.is_file() or manifest_path_obj.name not in MANIFEST_NAMES:
             raise UserWarning(  # pragma: no cover
@@ -86,9 +97,10 @@ class ChecksOdooModuleFixit(BaseChecker):
             curr_path = Path(f_path)
             changed |= {curr_path}
         manifest_path = Path(self.manifest_path)
-        if changed == {manifest_path}:
-            # Compatible with current way using only the manifest file for the whole module
-            # TODO: Use file by file to use jobs in pre-commit
+        if self.expand_manifest and changed == {manifest_path}:
+            # Legacy CLI behavior: passing only the manifest means checking the whole module
+            # pre-commit passes --no-expand-manifest since it sends exactly the changed files
+            # and another concurrent chunked invocation may already be processing the sibling files
             changed = {manifest_path.parent}
         if {manifest_path.parent} & changed:
             # Manifest is not imported from __init__.py so it is included manually
@@ -123,7 +135,7 @@ class ChecksOdooModuleFixit(BaseChecker):
                         paths=[manifest_path],
                         options=manifest_options,
                         autofix=self.autofix,
-                        parallel=not self.autofix,  # Fixit parallel is not compatible with autofix
+                        parallel=False,
                     )
                 )
             if lint_rules_enabled_all and self.changed:
@@ -133,7 +145,10 @@ class ChecksOdooModuleFixit(BaseChecker):
                         paths=changed,
                         options=all_options,
                         autofix=self.autofix,
-                        parallel=not self.autofix,  # Fixit parallel is not compatible with autofix
+                        # fixit's own pool is never worth it here: the concurrency comes from
+                        # pre-commit chunked invocations or from the per-module pool in run()
+                        # and a nested pool per module only pays spawn+import overhead
+                        parallel=False,
                     )
                 )
             for result in chain.from_iterable(results):
@@ -235,6 +250,22 @@ def lookup_manifest_paths(filenames_or_modules):
     return odoo_module_files_changed
 
 
+def _run_manifest_checks(manifest_path, changed, enable, disable, no_verbose, autofix, no_expand_manifest):
+    """Run all the checks of a single Odoo module (also used as a process pool task)"""
+    checks_obj = ChecksOdooModuleFixit(
+        Path(manifest_path).resolve().as_posix(),
+        enable,
+        disable,
+        changed=changed,
+        verbose=not no_verbose,
+        autofix=autofix,
+        expand_manifest=not no_expand_manifest,
+    )
+    for check in utils.getattr_checks(checks_obj):
+        check()
+    return checks_obj.checks_errors
+
+
 def run(
     files_or_modules,
     enable=None,
@@ -244,6 +275,7 @@ def run(
     list_msgs=False,
     autofix=False,
     xml_attributes_order=None,
+    no_expand_manifest=False,
 ):
     # pylint: disable=duplicate-code
     if list_msgs:
@@ -264,21 +296,23 @@ def run(
     if disable is None:
         disable = set()
     exit_status = 0
-    for manifest_path, changed in lookup_manifest_paths(files_or_modules).items():
-        if not manifest_path:
-            continue
-        checks_obj = ChecksOdooModuleFixit(
-            Path(manifest_path).resolve().as_posix(),
-            enable,
-            disable,
-            changed=changed,
-            verbose=not no_verbose,
-            autofix=autofix,
-        )
-        for check in utils.getattr_checks(checks_obj):
-            check()
-        if checks_obj.checks_errors:
-            all_check_errors.extend(checks_obj.checks_errors)
+    check_args = [
+        (manifest_path, changed, enable, disable, no_verbose, autofix, no_expand_manifest)
+        for manifest_path, changed in lookup_manifest_paths(files_or_modules).items()
+        if manifest_path
+    ]
+    # pre-commit exports PRE_COMMIT=1 and already runs ~cpu_count concurrent chunked
+    # invocations (require_serial: false) so a pool there would only oversubscribe the CPU
+    # A standalone CLI invocation instead processes the independent modules concurrently
+    if len(check_args) > 1 and "PRE_COMMIT" not in os.environ:
+        with ProcessPoolExecutor() as executor:
+            futures = [executor.submit(_run_manifest_checks, *args) for args in check_args]
+            all_module_errors = [future.result() for future in futures]
+    else:
+        all_module_errors = [_run_manifest_checks(*args) for args in check_args]
+    for checks_errors in all_module_errors:
+        if checks_errors:
+            all_check_errors.extend(checks_errors)
             exit_status = 1
     # Sort errors by filepath, line, column and code
     all_check_errors.sort()

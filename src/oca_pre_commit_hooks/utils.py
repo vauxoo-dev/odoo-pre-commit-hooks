@@ -231,27 +231,50 @@ def chdir(directory):
         os.chdir(original_dir)
 
 
-@lru_cache(maxsize=256)
+# Cache of the top level path resolved for each path already visited and
+# set of the top level paths already found containing a ".git" entry
+_top_path_cache = {}
+_known_top_paths = set()
+
+
 def top_path(path):
-    """Get the top level path based on git
+    """Get the top level path based on the first parent path containing a ".git"
+    entry (a directory for regular repositories or a file for submodules and worktrees)
     If no git repository is found (and therefore no top level path), the user's HOME is returned.
 
-    It is using lru_cache in order to re-use top level path values
-    if multiple files are sharing the same path
+    It looks for the ".git" entry instead of running "git rev-parse --show-toplevel"
+    since that spawning a subprocess per directory was a significant slice of the
+    whole runtime (py-spy profiled)
+
+    The values are cached and the children paths of a top level path already found
+    re-use it directly based on the path prefix so they are resolved without
+    checking ".git" for each parent path again
 
     Notice it is not compatible with TemporaryDirectory since that it needs to have a .git folder
     but you can fix it using "git init"
     """
-    try:
-        with chdir(path):
-            return (
-                subprocess.check_output(["git", "rev-parse", "--show-toplevel"], stderr=subprocess.STDOUT)
-                .decode(sys.stdout.encoding)
-                .strip()
-            )
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        path = Path(path)
-        return path.root or Path.home()
+    path = str(path)
+    top = _top_path_cache.get(path)
+    if top is not None:
+        return top
+    path_obj = full_norm_path_obj(path)
+    for known_top_path in _known_top_paths:
+        if path_obj.is_relative_to(known_top_path):
+            _top_path_cache[path] = known_top_path
+            return known_top_path
+    if (path_obj / ".git").exists():
+        # Native separators (not "as_posix()") to match the rest of the codebase,
+        # which builds and compares paths with "os.path" using the OS separator
+        top = str(path_obj)
+        _known_top_paths.add(top)
+    else:
+        parent_path = path_obj.parent
+        if parent_path == path_obj:
+            top = path_obj.root or str(Path.home())
+        else:
+            top = top_path(str(parent_path))
+    _top_path_cache[path] = top
+    return top
 
 
 @lru_cache(maxsize=64)
@@ -277,23 +300,61 @@ def repo_name(path):
         return ""
 
 
+def full_norm_path_obj(path):
+    """Expand paths in all possible ways returning a "Path" object
+    "Path.resolve()" replaces the previous abspath + realpath + normpath chain in a
+    single call since it already returns an absolute path resolving the symlinks and
+    normalizing the parent references ("os.path.expandvars" is kept because pathlib
+    does not provide an equivalent)
+    """
+    return Path(os.path.expandvars(str(path).strip())).expanduser().resolve()
+
+
 def full_norm_path(path):
     """Expand paths in all possible ways"""
-    return os.path.normpath(os.path.realpath(os.path.abspath(os.path.expanduser(os.path.expandvars(path.strip())))))
+    return str(full_norm_path_obj(path))
 
 
-@lru_cache(maxsize=256)
+# Cache of the results already resolved by path, filenames and top and the
+# parent paths where one of the filenames was already found by filenames
+_walk_up_cache = {}
+_known_walk_up_dirs = {}
+
+
 def walk_up(path, filenames, top):
     """Look for "filenames" walking up in parent paths of "path"
     but limited only to "top" path
+    The results are cached and the children paths of a parent path where one of
+    the filenames was already found re-use it directly without checking the
+    filesystem for each parent path again
     """
-    if full_norm_path(path) == full_norm_path(top):
-        return None
-    for filename in filenames:
-        path_filename = os.path.join(path, filename)
-        if os.path.isfile(full_norm_path(path_filename)):
-            return path_filename
-    return walk_up(os.path.dirname(path), filenames, top)
+    cache_key = (path, filenames, top)
+    try:
+        return _walk_up_cache[cache_key]
+    except KeyError:
+        pass
+    known_dirs = _known_walk_up_dirs.setdefault(filenames, {})
+    path_obj = Path(path)
+    result = None
+    for parent_path in (path_obj, *path_obj.parents):
+        result = known_dirs.get((str(parent_path), top))
+        if result is not None:
+            break
+    if result is None:
+        top_norm_path = full_norm_path_obj(top)
+        current_path = path_obj
+        while full_norm_path_obj(current_path) != top_norm_path:
+            for filename in filenames:
+                path_filename = current_path / filename
+                if full_norm_path_obj(path_filename).is_file():
+                    result = str(path_filename)
+                    known_dirs[(str(current_path), top)] = result
+                    break
+            if result is not None or current_path.parent == current_path:
+                break
+            current_path = current_path.parent
+    _walk_up_cache[cache_key] = result
+    return result
 
 
 def fixit_parse_rule():

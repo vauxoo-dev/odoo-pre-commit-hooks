@@ -10,6 +10,16 @@ from pathlib import Path
 import pytest
 
 import oca_pre_commit_hooks
+
+# Import the submodules explicitly to bind them as package attributes since
+# the package __init__ does not import them and the attribute accesses below
+# would otherwise depend on the import side effects of other test modules
+import oca_pre_commit_hooks.checks_odoo_module
+import oca_pre_commit_hooks.checks_odoo_module_csv
+import oca_pre_commit_hooks.checks_odoo_module_fixit
+import oca_pre_commit_hooks.checks_odoo_module_xml
+import oca_pre_commit_hooks.cli
+import oca_pre_commit_hooks.cli_fixit
 import oca_pre_commit_hooks.global_parser
 from . import common
 
