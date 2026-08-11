@@ -24,6 +24,13 @@ def main(argv=None):
         nargs="*",
         help="Odoo __manifest__.py paths or Odoo module paths.",
     )
+    parser.add_argument(
+        "--no-expand-manifest",
+        action="store_true",
+        default=False,
+        help="Do not expand a manifest-only path to the whole module directory. Recommended for "
+        "pre-commit, which passes exactly the changed files.",
+    )
     if argv is None:
         argv = sys.argv[1:]
     kwargs = vars(parser.parse_args(argv))

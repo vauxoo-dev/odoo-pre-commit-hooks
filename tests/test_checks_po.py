@@ -9,6 +9,10 @@ from tempfile import TemporaryDirectory
 import pytest
 
 import oca_pre_commit_hooks
+
+# Explicit submodule imports to bind them as package attributes (see test_checks.py)
+import oca_pre_commit_hooks.checks_odoo_module_po
+import oca_pre_commit_hooks.cli_po
 from . import common
 
 RE_CHECK_DOCSTRING = r"\* Check (?P<check>[\w|\-]+)"
