@@ -15,10 +15,6 @@ from oca_pre_commit_hooks.global_parser import CONFIG_NAME, DISABLE_ENV_VAR, ENA
 
 RND = random.Random(987654321)
 
-# Simulate the pre-commit environment (see checks_odoo_module_fixit.check_py_fixit):
-# without it every run() call would spawn a fixit process pool slowing down the whole suite
-os.environ.setdefault("PRE_COMMIT", "1")
-
 
 def assertDictEqual(self, d1, d2, msg=None):
     # pylint:disable=invalid-name

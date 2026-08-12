@@ -16,16 +16,13 @@ import oca_pre_commit_hooks
 # would otherwise depend on the import side effects of other test modules
 import oca_pre_commit_hooks.checks_odoo_module
 import oca_pre_commit_hooks.checks_odoo_module_csv
-import oca_pre_commit_hooks.checks_odoo_module_fixit
 import oca_pre_commit_hooks.checks_odoo_module_xml
 import oca_pre_commit_hooks.cli
-import oca_pre_commit_hooks.cli_fixit
 import oca_pre_commit_hooks.global_parser
 from . import common
 
 ALL_CHECK_CLASS = [
     oca_pre_commit_hooks.checks_odoo_module.ChecksOdooModule,
-    oca_pre_commit_hooks.checks_odoo_module_fixit.ChecksOdooModuleFixit,
     oca_pre_commit_hooks.checks_odoo_module_csv.ChecksOdooModuleCSV,
     oca_pre_commit_hooks.checks_odoo_module_xml.ChecksOdooModuleXML,
 ]
@@ -34,14 +31,9 @@ ALL_CHECK_CLASS = [
 EXPECTED_ERRORS = {
     "csv-duplicate-record-id": 1,
     "csv-syntax-error": 1,
-    "field-string-redundant": 30,
     "file-not-used": 1,
-    "manifest-superfluous-key": 3,
     "manifest-syntax-error": 2,
-    "prefer-env-translation": 39,
     "prefer-readme-rst": 1,
-    "unused-logger": 1,
-    "use-header-comments": 1,
     "weblate-component-too-long": 1,
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-qweb-replace-low-priority": 9,
@@ -79,14 +71,10 @@ class TestChecks(common.ChecksCommon):
         self.expected_errors = EXPECTED_ERRORS.copy()
 
     def checks_run(self, *args, **kwargs):
-        result = oca_pre_commit_hooks.checks_odoo_module.run(*args, **kwargs)
-        result += oca_pre_commit_hooks.checks_odoo_module_fixit.run(*args, **kwargs)
-        return result
+        return oca_pre_commit_hooks.checks_odoo_module.run(*args, **kwargs)
 
     def checks_cli_main(self, *args, **kwargs):
-        result = oca_pre_commit_hooks.cli.main(*args, **kwargs)
-        result2 = oca_pre_commit_hooks.cli_fixit.main(*args, **kwargs)
-        return result + result2
+        return oca_pre_commit_hooks.cli.main(*args, **kwargs)
 
     @pytest.mark.parametrize("check2disable", EXPECTED_ERRORS)
     def test_checks_disable_one_by_one_with_random_cli_env_conf(self, check2disable):
@@ -273,21 +261,6 @@ class TestChecks(common.ChecksCommon):
             b'<span class="my-class" t-att-id="dynamic_id" name="dummy">Hello</span>' in content_t1
         ), "The span class and t-att-id combination was previously fixed"
 
-        py_comment = os.path.join(self.test_repo_path, "eleven_module", "models.py")
-        with open(py_comment, "rb") as f:
-            content = f.read()
-
-        assert b"""
-# comment normal
-# pylint: comment
-# Copyright 2016 Vauxoo
-# Copyright 2015 Vauxoo
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
-# flake8: comment
-# comment normal
-
-""" in content, "The py Copyright was previously fixed"
-
         escaped_double_quotes = os.path.join(self.test_repo_path, "test_module", "model_view.xml")
         with open(escaped_double_quotes, "rb") as f:
             content = f.read()
@@ -391,14 +364,6 @@ class TestChecks(common.ChecksCommon):
         assert (
             b'<span t-att-id="dynamic_id" class="my-class" name="dummy">Hello</span>' in content_t1
         ), "The span class and t-att-id combination was not fixed"
-
-        with open(py_comment, "rb") as f:
-            content = f.read()
-        assert b"""
-# pylint: comment
-# flake8: comment
-
-""" in content, "The py Copyright was not fixed"
 
         with open(escaped_double_quotes, "rb") as f:
             content = f.read()

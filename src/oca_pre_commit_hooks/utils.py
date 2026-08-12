@@ -11,8 +11,6 @@ from inspect import getmembers, isfunction
 from itertools import chain
 from pathlib import Path
 
-from fixit.config import collect_rules, parse_rule
-from fixit.ftypes import Config
 from packaging.version import InvalidVersion, Version
 
 from oca_pre_commit_hooks.base_checker import BaseChecker
@@ -20,21 +18,6 @@ from oca_pre_commit_hooks.base_checker import BaseChecker
 CHECKS_DISABLED_REGEX = re.compile(re.escape("oca-hooks:disable=") + r"([a-z\-,]+)")
 DEPRECATED_CHECKS_DISABLED_REGEX = re.compile(re.escape("pylint:disable=") + r"([a-z\-,]+)")
 RE_CHECK_DOCSTRING = r"\* Check (?P<check>[\w|\-]+)"
-VALID_HEADER_COMMENTS = (
-    "# !",  # shebang
-    "#!",  # shebang
-    "coding:",  # encode
-    "fixit:",
-    "lint-ignore:",  # fixit
-    "lint-ignore=",  # fixit
-    "flake8:",
-    "fmt:",  # black
-    "isort:",
-    "noqa:",  # flake8
-    "nosec:",  # bandit
-    "oca-hooks:",
-    "pylint:",
-)
 DFLT_BOOLEAN_FIELDS = [
     # common boolean fields repeated for many models
     "active",
@@ -357,14 +340,6 @@ def walk_up(path, filenames, top):
     return result
 
 
-def fixit_parse_rule():
-    rule = parse_rule(
-        ".checks_odoo_module_fixit_rules",
-        Path(__file__).resolve().parent,
-    )
-    return rule
-
-
 def get_checks_docstring(check_classes):
     checks_docstring = ""
     checks_found = set()
@@ -383,14 +358,6 @@ def get_checks_docstring(check_classes):
             checks_docstring += "\n" + check_meth.__doc__.strip(" \n") + "\n"
             checks_found |= set(re.findall(RE_CHECK_DOCSTRING, checks_docstring))
             checks_docstring = re.sub(r"( )+\*", "*", checks_docstring)
-    rule = fixit_parse_rule()
-    if "ChecksOdooModuleFixit" in [check_class.__name__ for check_class in check_classes]:
-        checks_docstring += "\n** Special fixit checks\n"
-        lint_rules = collect_rules(Config(enable=[rule], disable=[], python_version=None))
-        for lint_rule in sorted(lint_rules, key=lambda r: r.name):
-            checks_found |= {lint_rule.name}
-            rule_doc = lint_rule.__doc__.strip("\n ")
-            checks_docstring += f"\n* Check {lint_rule.name}\n{rule_doc}\n"
     return checks_found, checks_docstring
 
 

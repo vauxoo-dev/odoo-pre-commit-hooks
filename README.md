@@ -142,10 +142,6 @@ Check if the manifest file has syntax error
 * Check prefer-readme-rst
 Check if the module has README.md file to prefer README.rst file
 
-* Check use-header-comments
-Check if the py file has comments '# comment' only in the header of python files
-Except valid comments e.g. pylint, flake8, shebang or comments in the middle (not header)
-
 * Check csv-duplicate-record-id
 duplicate CSV "id" AKA xmlid but for CSV files
 
@@ -256,31 +252,6 @@ Indentify nodes incompatible with Prettier XML auto-fix generating possible unex
 Since that the text could be translated so it is a mutable value.
 It could raise `ValueError` exception if the language is changed.
 
-** Special fixit checks
-
-* Check field-string-redundant
-Detects and removes the 'string' parameter in odoo.fields if it is redundant
-(matches the field name in Title Case), ensuring it only applies to
-Odoo Class definitions (Models).
-
-* Check manifest-superfluous-key
-Identifies and removes
-Identifies from Odoo manifest files (__manifest__.py) superfluous keys
-(if they have the same as the default value) should be omitted for simplicity
-
-e.g. 'installable': True
-`True` is the default value for installable key
-
-e.g. 'data': []
-`[]` is the default value for 'data' key
-
-* Check prefer-env-translation
-Replace `_('text')` with `self.env._('text')` only if '_' comes from 'odoo._'
-and only for modules >=18.0
-
-* Check unused-logger
-Disallow unused `_logger = logging.getLogger(__name__)` in Odoo models.
-
 
 [//]: # (end-checks)
 
@@ -382,44 +353,18 @@ options:
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/syntax_err_module/ir.model.access.csv#L1 'utf-8' codec can't decode byte 0xf1 in position 47: invalid continuation byte
 
- * field-string-redundant
-
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/broken_module/models/broken_model.py#L98 The 'string' attribute is redundant and should be removed. (has autofix) You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=field-string-redundant` or `# lint-ignore`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/broken_module/models/broken_model.py#L130 The 'string' attribute is redundant and should be removed. (has autofix) You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=field-string-redundant` or `# lint-ignore`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/broken_module/models/broken_model.py#L140 The 'string' attribute is redundant and should be removed. (has autofix) You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=field-string-redundant` or `# lint-ignore`
-
  * file-not-used
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/broken_module/__openerp__.py#L1 File "broken_module/report/test_report.xml" is not referenced in the manifest. 🔴 If it is loaded from another source (e.g. a post_init_hook script), just add it under the section "oca_data_manual": ["report/test_report.xml",] to be considered. 🔵 Otherwise, you might want to remove it.
-
- * manifest-superfluous-key
-
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/broken_module/__openerp__.py#L32 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=manifest-superfluous-key` or `# lint-ignore`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/broken_module/__openerp__.py#L34 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=manifest-superfluous-key` or `# lint-ignore`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/woversion_module/__manifest__.py#L8 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=manifest-superfluous-key` or `# lint-ignore`
 
  * manifest-syntax-error
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/manifest_werror/__manifest__.py#L1 Manifest could not be loaded manifest malformed
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/woinit_module/__manifest__.py#L1 Manifest could not be loaded
 
- * prefer-env-translation
-
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/broken_module/models/broken_model.py#L247 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=prefer-env-translation` or `# lint-ignore`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/broken_module/models/broken_model.py#L264 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=prefer-env-translation` or `# lint-ignore`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/broken_module/models/broken_model.py#L267 Use self.env._(...) instead of _(…) directly inside Odoo model methods. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=prefer-env-translation` or `# lint-ignore`
-
  * prefer-readme-rst
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/broken_module/README.md#L1 Prefer README.rst instead of README.md
-
- * unused-logger
-
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/broken_module/models/model_inhe1.py#L17 Unused `_logger` is not allowed in Odoo models. Remove it if not used. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=unused-logger` or `# lint-ignore`
-
- * use-header-comments
-
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/eleven_module/models.py#L9 Use of header comments in lines 3, 5, 6, 7, 9
 
  * weblate-component-too-long
 

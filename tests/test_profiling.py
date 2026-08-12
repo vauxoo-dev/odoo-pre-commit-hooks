@@ -32,7 +32,6 @@ class TestProfiling:
 
     def test_profile_checks_module(self, request):
         checks_module_run = oca_pre_commit_hooks.cli.main
-        checks_module_run2 = oca_pre_commit_hooks.cli_fixit.main
         mp = pytest.MonkeyPatch()
         mp.setattr(sys, "argv", ["", "--no-exit", "--no-verbose"] + self.module_files)
         module_errors = MODULES_ERRORS.copy()
@@ -40,7 +39,6 @@ class TestProfiling:
         module_errors.pop("weblate-component-too-long", None)
         try:
             errors = checks_module_run()
-            errors += checks_module_run2()
             common.assertDictEqual(self, common.ChecksCommon.get_count_code_errors(errors), module_errors)
         finally:
             mp.undo()
@@ -59,12 +57,10 @@ class TestProfiling:
     def test_profile_checks_module_custom(self, request):
         manifests = self.manifests_from_repo(environ.get("PROFILING_TEST_REPO"))
         checks_module_run = oca_pre_commit_hooks.cli.main
-        checks_module_run2 = oca_pre_commit_hooks.cli_fixit.main
         mp = pytest.MonkeyPatch()
         mp.setattr(sys, "argv", ["", "--no-exit", "--no-verbose"] + manifests)
         try:
             print(f"Running oca-checks-odoo-module on {len(manifests)} manifests")
             checks_module_run()
-            checks_module_run2()
         finally:
             mp.undo()

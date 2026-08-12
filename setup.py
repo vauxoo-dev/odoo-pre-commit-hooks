@@ -93,7 +93,6 @@ setup(
     entry_points={
         "console_scripts": [
             "oca-checks-odoo-module = oca_pre_commit_hooks.cli:main",
-            "oca-checks-odoo-module-fixit = oca_pre_commit_hooks.cli_fixit:main",
             "oca-checks-po = oca_pre_commit_hooks.cli_po:main",
         ]
     },

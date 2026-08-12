@@ -3,7 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from oca_pre_commit_hooks import utils
-from oca_pre_commit_hooks.checks_odoo_module_fixit import MANIFEST_NAMES
+from oca_pre_commit_hooks.checks_odoo_module import MANIFEST_NAMES
 
 
 class TestUtils:
