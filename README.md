@@ -249,9 +249,6 @@ Dangerous qweb view defined with low priority
 * Check xml-duplicate-template-id
 Triggered when two templates share the same ID
 
-* Check xml-template-prettier-incompatible
-Indentify nodes incompatible with Prettier XML auto-fix generating possible unexpected text insertion
-
 * Check xml-xpath-translatable-item check `xpath` nodes using `contains(text(), 'Text translatable')`
 Since that the text could be translated so it is a mutable value.
 It could raise `ValueError` exception if the language is changed.
@@ -454,7 +451,7 @@ options:
  * xml-deprecated-qweb-directive
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/test_module/website_templates.xml#L7 Deprecated QWeb directive `t-esc-options`. Use `t-options` instead
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/test_module/website_templates.xml#L42 Deprecated QWeb directive `t-field-options`. Use `t-options` instead
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/test_module/website_templates.xml#L26 Deprecated QWeb directive `t-field-options`. Use `t-options` instead
 
  * xml-deprecated-qweb-directive-15
 
@@ -509,14 +506,14 @@ options:
 
  * xml-not-valid-char-link
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/test_module/website_templates.xml#L64 The resource in in src/href contains a not valid character
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/test_module/website_templates.xml#L66 The resource in in src/href contains a not valid character
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/test_module/website_templates.xml#L48 The resource in in src/href contains a not valid character
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/test_module/website_templates.xml#L50 The resource in in src/href contains a not valid character
 
  * xml-oe-structure-missing-id
 
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/test_module/website_templates.xml#L9 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/test_module/website_templates.xml#L13 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/test_module/website_templates.xml#L46 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/test_module/website_templates.xml#L30 Consider removing the class `oe_structure` or adding a proper id to the tag. The id must contain `oe_structure`
 
  * xml-record-missing-id
 
@@ -539,12 +536,6 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/broken_module/deprecated_disable.xml#L4 The expected attributes order is `<record id="duplicate_record" ...>` Use `<record id="duplicate_record" ...>` instead
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/broken_module/model_view_odoo2.xml#L43 The expected attributes order is `<record id="view_ir_config_search" ...>` Use `<record id="view_ir_config_search" ...>` instead
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/broken_module/model_view_odoo2.xml#L68 The expected attributes order is `<record id="access_rule" ...>` Use `<record id="access_rule" ...>` instead
-
- * xml-template-prettier-incompatible
-
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/test_module/website_templates.xml#L22 Node `<textarea ...><t t-out=...` incompatible for Prettier XML auto-fix. To prevent unexpected text insertion prefer `<textarea t-out=...`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/test_module/website_templates.xml#L24 Node `<textarea ...><t t-out=...` incompatible for Prettier XML auto-fix. To prevent unexpected text insertion prefer `<textarea t-out=...`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.25/test_repo/test_module/website_templates.xml#L26 Node `<textarea ...><t t-out=...` incompatible for Prettier XML auto-fix. To prevent unexpected text insertion prefer `<textarea t-out=...`
 
  * xml-view-dangerous-replace-low-priority
 
