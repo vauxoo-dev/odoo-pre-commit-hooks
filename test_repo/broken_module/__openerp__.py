@@ -16,6 +16,7 @@
     },
     'data': [
         'model_view.xml', 'model_view2.xml', 'model_view_odoo.xml',
+        'view_active_edge_cases.xml',
         'model_view_odoo2.xml',
         'deprecated_disable.xml',
         'file_no_exist.xml',

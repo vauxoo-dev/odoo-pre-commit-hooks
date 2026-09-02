@@ -43,6 +43,8 @@ class ChecksOdooModuleXML(BaseChecker):
     xpath_view_replaces = etree.XPath(".//*[@position='replace'][1]")
     xpath_char_links = etree.XPath(".//link[@href]|.//script[@src]")
     xpath_view_priority = etree.XPath("field[@name='priority'][1]")
+    xpath_view_active = etree.XPath("field[@name='active'][1]")
+    xpath_view_arch = etree.XPath("field[@name='arch' or @name='arch_base'][1]")
     xpath_field_name = etree.XPath("field[@name='name'][1]")
     xpath_record_fields_wname = etree.XPath("field[@name]")
     xpath_comment = etree.XPath("//comment()")
@@ -320,6 +322,12 @@ class ChecksOdooModuleXML(BaseChecker):
                 extra_positions=[(field[0]["filename_short"], field[1].sourceline) for field in fields[1:]],
             )
 
+        # view_missing_active, deferred to the end so the inserted lines do not move byte
+        # offsets under the checks that share this pass
+        if self.autofix:
+            for manifest_data in self.manifest_datas:
+                self._flush_view_missing_active(manifest_data)
+
     @utils.only_required_for_checks("xml-syntax-error")
     def check_xml_syntax_error(self):
         """* Check xml-syntax-error
@@ -511,7 +519,152 @@ class ChecksOdooModuleXML(BaseChecker):
             utils.perform_fix(manifest_data["filename"], content)
             self.update_node(manifest_data)
 
-    @utils.only_required_for_checks("xml-view-dangerous-replace-low-priority", "xml-deprecated-tree-attribute")
+    # convert.py's own DATA_ROOTS: all three map to `_tag_root`, which recurses, and any of
+    # them may be the document root.
+    DATA_ROOTS = ("odoo", "openerp", "data")
+
+    @classmethod
+    def _record_noupdate(cls, record):
+        """Effective `noupdate` of `record`, or `None` when `convert.py` would not load it.
+
+        Mirrors the parser: every ancestor up to the root must be a data container, otherwise
+        the record is markup inside a `<template>` body or inside another record's `arch` and is
+        never dispatched. The flag is read with `nodeattr2bool` semantics -- absent or empty
+        inherits the enclosing value, and anything other than `0`/`false`/`off` is true.
+        """
+        chain = []
+        node = record.getparent()
+        while node is not None:
+            if node.tag not in cls.DATA_ROOTS:
+                return None
+            chain.append(node)
+            node = node.getparent()
+        if not chain:
+            return None
+        noupdate = False
+        for node in reversed(chain):
+            value = (node.get("noupdate") or "").strip()
+            if value:
+                noupdate = value.lower() not in ("0", "false", "off")
+        return noupdate
+
+    def _is_loadable_view_record(self, record):
+        """Whether `convert.py` would load this record, and whether declaring `active` helps.
+
+        Disqualifying, in order:
+
+        * The record is not reachable as a record -- some ancestor is not a data container, so
+          it is markup inside a `<template>` body or inside another record's `arch`, and writing
+          a field into it would corrupt the arch.
+        * It is under an effective `noupdate="1"`, where `_tag_record` returns before reading a
+          single field once the record exists, so nothing is ever re-asserted.
+        * It has no xmlid. Such a record cannot be referenced or re-asserted by a later update;
+          `xml-record-missing-id` is the check with something to say about it.
+        * Its xmlid names another module, as in `<record id="account.portal_my_invoices">`. That
+          is an overwrite of a view someone else defines, and the declaration belongs to that
+          definition rather than to every module that touches it -- otherwise each of them
+          re-activates a foreign view on every update, overriding a deliberate archive. A prefix
+          naming the *current* module is only redundant, not an overwrite
+          (`xml-redundant-module-name` reports that), so those are still checked.
+        * It carries no `arch` of its own, so it only sets a few fields on a view defined
+          elsewhere, usually a core `<template>`.
+        """
+        if self._record_noupdate(record) is not False:
+            return False
+        record_id = record.get("id") or ""
+        if not record_id:
+            return False
+        if "." in record_id and record_id.split(".", 1)[0] != self.module_name:
+            return False
+        return bool(self.xpath_view_arch(record))
+
+    def _check_xml_view_missing_active(self, manifest_data, record):
+        """Report an `ir.ui.view` record that does not declare the `active` field.
+
+        `active` defaults to `True`, so leaving it out looks harmless, but the default only
+        applies when the record is created. `odoo/tools/convert.py` builds the values to write
+        from `rec.iterchildren("field")` -- the fields the record declares, and nothing else --
+        so on a module update an undeclared `active` is never written and the column keeps
+        whatever is in the database.
+
+        That matters because the Odoo Upgrade service disables views it cannot validate. It
+        re-enables the ones that validate again by the end of the run, but a view still failing
+        when the run ends stays disabled, and once the database is delivered nothing re-enables
+        it -- not even repairing its anchor afterwards. The page still renders, no error reaches
+        the log, and whatever the view contributed is missing from the screen. With `active`
+        declared, the next module update re-asserts it.
+
+        This applies to inherited views too. An inherited view does not edit its parent, it is a
+        record of its own with its own `active` column, and the value is not taken from the
+        parent.
+        """
+        if not self._is_loadable_view_record(record) or self.xpath_view_active(record):
+            return
+        self.register_error(
+            code="xml-view-missing-active",
+            message='Missing `<field name="active" ...>` in the `ir.ui.view` record',
+            info=(
+                'Use `<field name="active" eval="True" />`. It is the default value, but only a '
+                "declared field is written on a module update, so a view left disabled at the end "
+                "of a migration is never re-enabled without it"
+            ),
+            filepath=manifest_data["filename_short"],
+            line=record.sourceline,
+        )
+        if self.autofix:
+            # Deferred on purpose. Inserting a line here would move every byte offset after it,
+            # and the checks still to run in this pass hold offsets from before the insertion --
+            # re-parsing mid-iteration is what silently stops the other autofixes from applying.
+            manifest_data["_needs_active_fix"] = True
+
+    def _flush_view_missing_active(self, manifest_data):
+        """Insert every missing `<field name="active" eval="True" />` of a file, in one pass.
+
+        Runs after the record loop is over, and recomputes the positions from a fresh read, so
+        it is correct whatever the other autofixes did to the file earlier in the same run. The
+        insertions are applied from the bottom up, which keeps the offsets above each one valid.
+
+        The new line goes above the record's `arch` and copies its indentation, which puts
+        `active` after `name`/`model`/`inherit_id` and before the long block. A record whose
+        `arch` shares its line with something else is left alone: guessing the layout there
+        would do more harm than the fix is worth, so those stay reported and unfixed.
+        """
+        if not manifest_data.pop("_needs_active_fix", False):
+            return
+        node = self.update_node(manifest_data)
+        locator = self._get_tag_locator(manifest_data)
+        content = locator.content
+        # Follow the file's own line ending so a CRLF file does not end up with one lone LF.
+        eol = b"\r\n" if content.count(b"\r\n") > content.count(b"\n") - content.count(b"\r\n") else b"\n"
+        insertions = []
+        for record in node.iter("record"):
+            if record.get("model") != "ir.ui.view" or self.xpath_view_active(record):
+                continue
+            if not self._is_loadable_view_record(record):
+                continue
+            anchor = self.xpath_view_arch(record)[0]
+            tag_info = locator.get_tag(anchor)
+            if not tag_info:
+                continue
+            line_start = content.rfind(b"\n", 0, tag_info.start) + 1
+            indent = content[line_start : tag_info.start]
+            if indent.strip():
+                continue
+            insertions.append((line_start, indent))
+        if not insertions:
+            return
+        for line_start, indent in sorted(insertions, reverse=True):
+            content = (
+                content[:line_start] + indent + b'<field name="active" eval="True" />' + eol + content[line_start:]
+            )
+        utils.perform_fix(manifest_data["filename"], content)
+        self.update_node(manifest_data)
+
+    @utils.only_required_for_checks(
+        "xml-view-dangerous-replace-low-priority",
+        "xml-deprecated-tree-attribute",
+        "xml-view-missing-active",
+    )
     def visit_xml_record_view(self, manifest_data, record):
         """* Check xml-view-dangerous-replace-low-priority in ir.ui.view
 
@@ -521,9 +674,21 @@ class ChecksOdooModuleXML(BaseChecker):
 
         * Check xml-deprecated-tree-attribute
           The tree-view declaration is using a deprecated attribute.
+
+        * Check xml-view-missing-active in ir.ui.view
+          The view record does not declare the `active` field. It defaults to True, but only a
+          declared field is written on a module update, so a view left disabled at the end of a
+          migration is never re-enabled. Declare it explicitly:
+
+            <record id="my_view" model="ir.ui.view">
+                <field name="active" eval="True" />
         """
         if record.get("model") != "ir.ui.view":
             return
+
+        # view_missing_active
+        if self.is_message_enabled("xml-view-missing-active", manifest_data["disabled_checks"]):
+            self._check_xml_view_missing_active(manifest_data, record)
         # view_dangerous_replace_low_priority
         if self.is_message_enabled("xml-view-dangerous-replace-low-priority", manifest_data["disabled_checks"]):
             priority = self._get_priority(record)

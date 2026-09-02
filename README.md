@@ -220,6 +220,14 @@ This context avoid send email and mail log warning
 * Check xml-deprecated-tree-attribute
   The tree-view declaration is using a deprecated attribute.
 
+* Check xml-view-missing-active in ir.ui.view
+  The view record does not declare the `active` field. It defaults to True, but only a
+  declared field is written on a module update, so a view left disabled at the end of a
+  migration is never re-enabled. Declare it explicitly:
+
+    <record id="my_view" model="ir.ui.view">
+        <field name="active" eval="True" />
+
 * Check xml-record-missing-id
 Generated when a <record> tag has no id.
 
@@ -391,8 +399,8 @@ options:
 
  * manifest-superfluous-key
 
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/broken_module/__openerp__.py#L32 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=manifest-superfluous-key` or `# lint-ignore`
-    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/broken_module/__openerp__.py#L34 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=manifest-superfluous-key` or `# lint-ignore`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/broken_module/__openerp__.py#L33 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=manifest-superfluous-key` or `# lint-ignore`
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/broken_module/__openerp__.py#L35 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=manifest-superfluous-key` or `# lint-ignore`
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/woversion_module/__manifest__.py#L8 Delete empty values. You can disable this check by adding the following comment to the affected line or just above it `# lint-ignore=manifest-superfluous-key` or `# lint-ignore`
 
  * manifest-syntax-error
@@ -542,6 +550,12 @@ options:
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/broken_module/model_view2.xml#L25 Dangerous use of `replace` from view with priority 0 < 99 Only replace as a last resort. Try `position="attributes"`, `position="move"` or `invisible="1"` first
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/broken_module/model_view2.xml#L37 Dangerous use of `replace` from view with priority 0 < 99 Only replace as a last resort. Try `position="attributes"`, `position="move"` or `invisible="1"` first
     - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/broken_module/model_view2.xml#L47 Dangerous use of `replace` from view with priority 0 < 99 Only replace as a last resort. Try `position="attributes"`, `position="move"` or `invisible="1"` first
+
+ * xml-view-missing-active
+
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/broken_module/demo/duplicated_id_demo.xml#L5 Missing `<field name="active" ...>` in the `ir.ui.view` record Use `<field name="active" eval="True" />`. It is the default value, but only a declared field is written on a module update, so a view left disabled at the end of a migration is never re-enabled without it
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/broken_module/model_view.xml#L5 Missing `<field name="active" ...>` in the `ir.ui.view` record Use `<field name="active" eval="True" />`. It is the default value, but only a declared field is written on a module update, so a view left disabled at the end of a migration is never re-enabled without it
+    - https://github.com/OCA/odoo-pre-commit-hooks/blob/v0.2.26/test_repo/broken_module/model_view2.xml#L5 Missing `<field name="active" ...>` in the `ir.ui.view` record Use `<field name="active" eval="True" />`. It is the default value, but only a declared field is written on a module update, so a view left disabled at the end of a migration is never re-enabled without it
 
  * xml-xpath-translatable-item
 

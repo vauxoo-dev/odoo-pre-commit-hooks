@@ -45,7 +45,7 @@ EXPECTED_ERRORS = {
     "weblate-component-too-long": 1,
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-qweb-replace-low-priority": 9,
-    "xml-deprecated-data-node": 8,
+    "xml-deprecated-data-node": 9,
     "xml-deprecated-openerp-node": 4,
     "xml-deprecated-qweb-directive-15": 4,
     "xml-deprecated-qweb-directive": 2,
@@ -56,6 +56,7 @@ EXPECTED_ERRORS = {
     "xml-redundant-module-name": 3,
     "xml-syntax-error": 2,
     "xml-view-dangerous-replace-low-priority": 7,
+    "xml-view-missing-active": 28,
     "xml-xpath-translatable-item": 4,
     "xml-oe-structure-missing-id": 6,
     "xml-record-missing-id": 2,
@@ -218,6 +219,16 @@ class TestChecks(common.ChecksCommon):
         assert b'<field name="amount">1.08</field>' in content, "The XML eval was previously fixed"
         assert b'<field name="phone">4777777777</field>' in content, "The XML eval was previously fixed"
         assert b'<field name="priority">-1</field>' in content, "The XML eval was not fixed"
+
+        fname_view_edge = os.path.join(self.test_repo_path, "broken_module", "view_active_edge_cases.xml")
+        with open(fname_view_edge, "rb") as f_view_edge:
+            content = f_view_edge.read()
+        assert b'name="active"' not in content, "The active field was previously added"
+
+        fname_view_wo_active = os.path.join(self.test_repo_path, "broken_module", "model_view.xml")
+        with open(fname_view_wo_active, "rb") as f_view_wo_active:
+            content = f_view_wo_active.read()
+        assert b'name="active"' not in content, "The active field was previously added"
 
         fname_redundant_module_name = os.path.join(self.test_repo_path, "broken_module", "model_view2.xml")
         with open(fname_redundant_module_name, "rb") as f_redundant_module_name:
@@ -407,6 +418,46 @@ class TestChecks(common.ChecksCommon):
         # comments contain 1 valid deprecated
         assert content.count(b"t-esc") == 1, "The deprecated t-esc was not fixed"
         assert content.count(b"t-raw") == 1, "The deprecated t-esc was not fixed"
+
+        # xml-view-missing-active: inserted above the record's own arch, carrying the
+        # indentation of the line it is inserted above
+        with open(fname_view_wo_active, "rb") as f_view_wo_active:
+            content_active = f_view_wo_active.read()
+        assert (
+            b'            <field name="active" eval="True" />\n'
+            b'            <field name="arch" type="xml">' in content_active
+        ), "The active field was not inserted above the arch"
+        # the two records without any field carry no arch of their own, so they are neither
+        # reported nor fixed
+        assert content_active.count(b'name="active"') == 1, "Only the record carrying an arch must be fixed"
+
+        # The insertion is deferred to the end of the record loop precisely so that it does not
+        # move the byte offsets the other autofixes of the same pass are holding. This is the
+        # regression guard: an immediate insertion made these stop applying.
+        with open(fname_wrong_xml_eval, "rb") as f_wrong_xml_eval:
+            content_eval = f_wrong_xml_eval.read()
+        assert b'<field name="sequence" eval="1" />' in content_eval, "The eval fix stopped applying"
+        assert b'<field name="priority" eval="-1" />' in content_eval, "The eval fix stopped applying"
+
+        # The loadability guard must agree between the side that reports and the side that
+        # fixes, or a record is reported on every run and never fixed. The nested <data> is the
+        # case that used to fall in that gap.
+        with open(fname_view_edge, "rb") as f_view_edge:
+            content_edge = f_view_edge.read()
+        assert content_edge.count(b'name="active"') == 3, "The reported records were not all fixed"
+        for xmlid in (b"view_nested_data", b"view_arch_base", b"view_noupdate_reset"):
+            assert xmlid in content_edge, "The fixture lost a record"
+        # ... and the ones under an effective noupdate are neither reported nor touched, since
+        # `_tag_record` never writes a field there
+        head_on = content_edge.split(b'id="view_noupdate_on"')[1].split(b"</record>")[0]
+        assert b'name="active"' not in head_on, "A noupdate record must not be fixed"
+        head_inherited = content_edge.split(b'id="view_noupdate_inherited"')[1].split(b"</record>")[0]
+        assert b'name="active"' not in head_inherited, "An inherited noupdate must not be fixed"
+
+        # Running the fixer again must not insert the field twice
+        self.checks_run(self.file_paths, autofix=True, no_exit=True, no_verbose=False)
+        with open(fname_view_wo_active, "rb") as f_view_wo_active:
+            assert f_view_wo_active.read().count(b'name="active"') == 1, "The active field autofix is not idempotent"
 
     def test_xml_attributes_order_custom(self):
         custom_order = oca_pre_commit_hooks.global_parser.parse_xml_attributes_order("[class], [id], [t-if]")

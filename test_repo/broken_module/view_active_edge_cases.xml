@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data>
+        <!-- nested <data>: convert.py recurses through every DATA_ROOT, so this one is
+             loaded and must be both reported and fixed -->
+        <data>
+            <record id="view_nested_data" model="ir.ui.view">
+                <field name="name">nested.data</field>
+                <field name="arch" type="xml">
+                    <form />
+                </field>
+            </record>
+        </data>
+
+        <!-- arch_base is a view too -->
+        <record id="view_arch_base" model="ir.ui.view">
+            <field name="name">arch.base</field>
+            <field name="arch_base" type="xml">
+                <form />
+            </field>
+        </record>
+
+        <!-- nodeattr2bool: anything that is not 0/false/off is true, so this is noupdate -->
+        <data noupdate="on">
+            <record id="view_noupdate_on" model="ir.ui.view">
+                <field name="name">noupdate.on</field>
+                <field name="arch" type="xml">
+                    <form />
+                </field>
+            </record>
+        </data>
+
+        <!-- an empty noupdate inherits the enclosing one instead of resetting it -->
+        <data noupdate="1">
+            <data noupdate="">
+                <record id="view_noupdate_inherited" model="ir.ui.view">
+                    <field name="name">noupdate.inherited</field>
+                    <field name="arch" type="xml">
+                        <form />
+                    </field>
+                </record>
+            </data>
+
+            <!-- an explicit 0 does reset it, so this one is reported -->
+            <data noupdate="0">
+                <record id="view_noupdate_reset" model="ir.ui.view">
+                    <field name="name">noupdate.reset</field>
+                    <field name="arch" type="xml">
+                        <form />
+                    </field>
+                </record>
+            </data>
+        </data>
+    </data>
+</odoo>
