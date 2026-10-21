@@ -21,10 +21,13 @@
                 <field name="partner_latitude" options="{'format': false, 'enable_formatting': false}" />
                 <!-- Reported but not autofixed, the value is not a boolean -->
                 <field name="partner_longitude" options="{'format': 'dd/MM/yyyy'}" />
-                <!-- Not reported, "format" is not a top-level key or not a key -->
+                <!-- Reported but not autofixed, a nested dict uses the key too -->
+                <field name="color_index" options="{'format': false, 'datepicker': {'format': false}}" />
+                <!-- Not reported, "format" is not a top-level key, not a key or the options cannot be parsed -->
                 <field name="date" options="{'datepicker': {'format': false}}" />
                 <field name="comment" options="{'placeholder': 'format'}" />
                 <field name="ref" options="{'enable_formatting': false}" />
+                <field name="barcode" options="{'format': false" />
             </form>
         </field>
     </record>

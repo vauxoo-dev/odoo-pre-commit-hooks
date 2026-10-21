@@ -114,11 +114,7 @@ class ChecksOdooModuleXML(BaseChecker):
                 and idx + 2 < len(tokens)
                 and tokens[idx + 1].string == ":"
             ):
-                try:
-                    key = ast.literal_eval(token.string)
-                except (ValueError, SyntaxError):
-                    continue
-                keys[key] = tokens[idx + 2].string
+                keys[ast.literal_eval(token.string)] = tokens[idx + 2].string
         return keys
 
     def _get_first_tag(self, fileobj_xml):
@@ -890,10 +886,10 @@ class ChecksOdooModuleXML(BaseChecker):
                 ):
                     continue
                 attr_span = locator.get_attr(field_node, "options")
-                if not attr_span:
-                    continue
-                matches = list(
-                    FIELD_OPTION_FORMAT_RE.finditer(locator.content, attr_span.value_start, attr_span.value_end)
+                matches = (
+                    list(FIELD_OPTION_FORMAT_RE.finditer(locator.content, attr_span.value_start, attr_span.value_end))
+                    if attr_span
+                    else []
                 )
                 # More than one match means a nested dict also uses the key, it is not guessed which one
                 if len(matches) != 1:

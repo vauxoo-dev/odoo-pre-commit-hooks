@@ -46,7 +46,7 @@ EXPECTED_ERRORS = {
     "xml-create-user-wo-reset-password": 1,
     "xml-dangerous-qweb-replace-low-priority": 9,
     "xml-deprecated-data-node": 8,
-    "xml-deprecated-field-format-option": 7,
+    "xml-deprecated-field-format-option": 8,
     "xml-deprecated-openerp-node": 4,
     "xml-deprecated-qweb-directive-15": 4,
     "xml-deprecated-qweb-directive": 2,
@@ -449,7 +449,7 @@ class TestChecks(common.ChecksCommon):
             content = f.read()
         assert b'<field name="year" options="{\'enable_formatting\': false}" />' in content, "format was not fixed"
         # Kept: a conflict with "enable_formatting", a non-boolean value, a nested dict, a value and "t-options"
-        assert content.count(b"'format'") == 5, "A format option not meant to be fixed was changed"
+        assert content.count(b"'format'") == 8, "A format option not meant to be fixed was changed"
 
     def test_xml_attributes_order_custom(self):
         custom_order = oca_pre_commit_hooks.global_parser.parse_xml_attributes_order("[class], [id], [t-if]")

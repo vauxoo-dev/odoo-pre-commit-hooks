@@ -178,10 +178,10 @@ def test_xml_deprecated_field_format_option_autofix_preserves_format():
         # Idempotent: a second run only reports the cases that cannot be fixed
         errors = checks_odoo_module.run([str(module_dst / "__manifest__.py")], **run_kwargs)
         assert xml_path.read_text() == xml_content
-        assert len(errors) == 2
+        assert len(errors) == 3
 
 
-@pytest.mark.parametrize(("version", "expected_errors"), [("16.0.1.0.0", 0), ("17.0.1.0.0", 7)])
+@pytest.mark.parametrize(("version", "expected_errors"), [("16.0.1.0.0", 0), ("17.0.1.0.0", 8)])
 def test_xml_deprecated_field_format_option_from_17(version, expected_errors):
     with temporary_module_copy("test_repo/odoo19_module") as module_dst:
         manifest_path = module_dst / "__manifest__.py"
